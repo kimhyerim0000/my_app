@@ -1,5 +1,6 @@
 // ✅ Smart Shoe Cabinet UI (모듈화 완료 + 상단 회색 박스 클래스 적용)
 import 'package:flutter/material.dart';
+import 'ui2_screen.dart'; // ✅ UI_2 화면 import
 
 void main() {
   runApp(const SmartUIApp());
@@ -52,7 +53,7 @@ class _UIScreenState extends State<UIScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                //SizedBox(height: 10 * scaleH),
+                SizedBox(height: 10 * scaleH),
                 ImageWithControlsBox(scaleW: scaleW, scaleH: scaleH),
                 SizedBox(height: 10 * scaleH),
                 const SensorBoxesRow(),
@@ -114,6 +115,7 @@ class ImageWithControlsBox extends StatelessWidget {
           SizedBox(width: 10 * scaleW),
           Column(
             children: [
+              // 아래에 해당 버튼이 정의됨
               SideButton(label: "자주 가는 장소 등록", scaleW: scaleW, scaleH: scaleH),
               SizedBox(height: 10 * scaleH),
               SideButton(label: "적정 온습도 설정관리", scaleW: scaleW, scaleH: scaleH),
@@ -134,22 +136,33 @@ class SideButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 80 * scaleW,
-      height: 30 * scaleH,
-      decoration: BoxDecoration(
-        color: const Color(0xFFBBBBBB),
-        borderRadius: BorderRadius.circular(6 * scaleW),
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        label,
-        textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 6 * scaleW, color: Colors.black87),
+    return GestureDetector(
+      onTap: () {
+        if (label == "자주 가는 장소 등록") {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const UI2Screen()),
+          );
+        }
+      },
+      child: Container(
+        width: 80 * scaleW,
+        height: 30 * scaleH,
+        decoration: BoxDecoration(
+          color: const Color(0xFFBBBBBB),
+          borderRadius: BorderRadius.circular(6 * scaleW),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 6 * scaleW, color: Colors.black87),
+        ),
       ),
     );
   }
 }
+
 
 class SensorBoxesRow extends StatelessWidget {
   const SensorBoxesRow({super.key});
