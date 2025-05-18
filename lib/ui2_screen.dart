@@ -24,77 +24,31 @@ class UI2Screen extends StatelessWidget {
             padding: EdgeInsets.all(12 * scaleW),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [Align(
-  alignment: Alignment.topLeft,
-  child: GestureDetector(
-    onTap: () {
-
-      //Navigator.pop(context); // 이전 화면으로 돌아가기
-    
-    },
-    child: Icon(
-      Icons.arrow_left, // 삼각형 느낌의 왼쪽 화살표
-      size: 20 * scaleW,
-      color: Colors.black87,
-    ),
-  ),
-),
-SizedBox(height: 4 * scaleH),
-
-                // 상단 회색 상자 (장소 입력 안내)
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.symmetric(
-                      vertical: 8 * scaleH, horizontal: 10 * scaleW),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFCCCCCC),
-                    borderRadius: BorderRadius.circular(6 * scaleW),
-                  ),
-                  child: Text(
-                    '장소를 입력하고 등록 버튼을 누르세요.',
-                    style: TextStyle(
-                      fontSize: 8 * scaleW,
+              children: [
+                Align(
+                  alignment: Alignment.topLeft,
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                    child: Icon(
+                      Icons.arrow_left,
+                      size: 20 * scaleW,
                       color: Colors.black87,
                     ),
                   ),
                 ),
-                SizedBox(height: 10 * scaleH),
-
-                // 입력 필드 1
-                _inputField('장소명', scaleW, scaleH),
-                SizedBox(height: 6 * scaleH),
-
-                // 입력 필드 2
-                _inputField('주소', scaleW, scaleH),
-                SizedBox(height: 6 * scaleH),
-
-                // 입력 필드 3
-                _inputField('위도', scaleW, scaleH),
-                SizedBox(height: 6 * scaleH),
-
-                // 입력 필드 4
-                _inputField('경도', scaleW, scaleH),
-                SizedBox(height: 14 * scaleH),
-
-                // 등록 버튼
-                Center(
-                  child: Container(
-                    width: 70 * scaleW,
-                    height: 28 * scaleH,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFBBBBBB),
-                      borderRadius: BorderRadius.circular(6 * scaleW),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      '등록',
-                      style: TextStyle(
-                        fontSize: 8 * scaleW,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ),
+                SizedBox(height: 4 * scaleH),
+                Text("자주 가는 장소 등록", style: TextStyle(color: Colors.black, fontSize:6*scaleW)),
+                Row(
+                  children: [
+                    Expanded(child: _inputField('주소 입력', scaleW, scaleH)),
+                    SizedBox(width: 8 * scaleW),
+                    RegisterButton(scaleW: scaleW, scaleH: scaleH),
+                  ],
                 ),
+                SizedBox(height: 10 * scaleH),
+                InputFieldsColumn(scaleW: scaleW, scaleH: scaleH),
               ],
             ),
           ),
@@ -120,6 +74,85 @@ SizedBox(height: 4 * scaleH),
             fontSize: 7 * scaleW,
             color: Colors.black54,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class InputFieldsColumn extends StatelessWidget {
+  final double scaleW;
+  final double scaleH;
+  const InputFieldsColumn({super.key, required this.scaleW, required this.scaleH});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+  padding: EdgeInsets.all(6 * scaleW),
+  decoration: BoxDecoration(
+    color: const Color(0xFFCCCCCC),
+    borderRadius: BorderRadius.circular(0),
+  ),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text("주소1", style: TextStyle(color: Colors.black, fontSize:4*scaleW)),              
+      _inputField('주소 1'),
+      SizedBox(height: 6 * scaleH),
+      Text("주소1", style: TextStyle(color: Colors.black, fontSize:4*scaleW)),
+      _inputField('주소 2'),
+      SizedBox(height: 6 * scaleH),
+      Text("주소1", style: TextStyle(color: Colors.black, fontSize:4*scaleW)),
+      _inputField('주소 3'),
+    ],
+  ),
+);
+
+  }
+
+  Widget _inputField(String hint) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8 * scaleW),
+      height: 24 * scaleH,
+      decoration: BoxDecoration(
+        color: const Color(0xFFE0E0E0),
+        borderRadius: BorderRadius.circular(0),
+        border: Border.all(color: const Color(0xFFAAAAAA)),
+      ),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          hint,
+          style: TextStyle(
+            fontSize: 7 * scaleW,
+            color: Colors.black54,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class RegisterButton extends StatelessWidget {
+  final double scaleW;
+  final double scaleH;
+  const RegisterButton({super.key, required this.scaleW, required this.scaleH});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 30 * scaleW,
+      height: 24 * scaleH,
+      decoration: BoxDecoration(
+        color: const Color(0xFFBBBBBB),
+        borderRadius: BorderRadius.circular(6 * scaleW),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        '등록',
+        style: TextStyle(
+          fontSize: 6 * scaleW,
+          color: Colors.black,
         ),
       ),
     );
