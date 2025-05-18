@@ -6,6 +6,7 @@ class UI2Screen extends StatefulWidget {
   @override
   State<UI2Screen> createState() => _UI2ScreenState();
 }
+
 class _UI2ScreenState extends State<UI2Screen> {
   final TextEditingController inputController = TextEditingController();
   String registeredAddress = '';
@@ -59,7 +60,7 @@ class _UI2ScreenState extends State<UI2Screen> {
                         ),
                         padding: EdgeInsets.symmetric(horizontal: 8 * scaleW),
                         child: TextField(
-                          controller: inputController, // ← 위에서 선언한 TextEditingController 사용
+                          controller: inputController,
                           style: TextStyle(fontSize: 7 * scaleW),
                           decoration: const InputDecoration(border: InputBorder.none),
                         ),
@@ -79,11 +80,10 @@ class _UI2ScreenState extends State<UI2Screen> {
                 ),
                 SizedBox(height: 10 * scaleH),
                 InputFieldsColumn(
-  scaleW: scaleW,
-  scaleH: scaleH,
-  addressText: registeredAddress, // 전달!
-),
-
+                  scaleW: scaleW,
+                  scaleH: scaleH,
+                  address1Hint: registeredAddress.isEmpty ? '주소 1' : registeredAddress,
+                ),
               ],
             ),
           ),
@@ -91,59 +91,83 @@ class _UI2ScreenState extends State<UI2Screen> {
       ),
     );
   }
-
-  // Widget _inputField(String hint, double scaleW, double scaleH) {
-  //   return Container(
-  //     padding: EdgeInsets.symmetric(horizontal: 8 * scaleW),
-  //     height: 24 * scaleH,
-  //     decoration: BoxDecoration(
-  //       color: const Color(0xFFE0E0E0),
-  //       borderRadius: BorderRadius.circular(6 * scaleW),
-  //       border: Border.all(color: const Color(0xFFAAAAAA)),
-  //     ),
-  //     child: Align(
-  //       alignment: Alignment.centerLeft,
-  //       child: Text(
-  //         hint,
-  //         style: TextStyle(
-  //           fontSize: 7 * scaleW,
-  //           color: Colors.black54,
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
 }
 
-class InputFieldsColumn extends StatelessWidget {
+class InputFieldsColumn extends StatefulWidget {
   final double scaleW;
   final double scaleH;
-  final String addressText;
+  final String address1Hint;
 
   const InputFieldsColumn({
     super.key,
     required this.scaleW,
     required this.scaleH,
-    required this.addressText,
+    required this.address1Hint,
   });
 
   @override
+  State<InputFieldsColumn> createState() => _InputFieldsColumnState();
+}
+
+class _InputFieldsColumnState extends State<InputFieldsColumn> {
+  @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      padding: EdgeInsets.all(6 * widget.scaleW),
+      decoration: BoxDecoration(
+        color: const Color(0xFFCCCCCC),
+        borderRadius: BorderRadius.circular(0),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _labeledInputWithButton('주소1', widget.address1Hint, widget.scaleW, widget.scaleH),
+          SizedBox(height: 6 * widget.scaleH),
+          _labeledInputWithButton('주소2', '주소 2', widget.scaleW, widget.scaleH),
+          SizedBox(height: 6 * widget.scaleH),
+          _labeledInputWithButton('주소3', '주소 3', widget.scaleW, widget.scaleH),
+        ],
+      ),
+    );
+  }
+
+  Widget _labeledInputWithButton(String label, String hint, double scaleW, double scaleH) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text("주소1", style: TextStyle(color: Colors.black, fontSize: 4 * scaleW)),
-        Container(
-          height: 24 * scaleH,
-          padding: EdgeInsets.symmetric(horizontal: 8 * scaleW),
-          decoration: BoxDecoration(
-            color: const Color(0xFFE0E0E0),
-            border: Border.all(color: const Color(0xFFAAAAAA)),
+        Text(label, style: TextStyle(color: Colors.black, fontSize: 4 * scaleW)),
+        SizedBox(width: 6 * scaleW),
+        Expanded(
+          child: Container(
+            height: 24 * scaleH,
+            padding: EdgeInsets.symmetric(horizontal: 8 * scaleW),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE0E0E0),
+              borderRadius: BorderRadius.circular(0),
+              border: Border.all(color: const Color(0xFFAAAAAA)),
+            ),
+            alignment: Alignment.centerLeft,
+            child: Text(
+              hint,
+              style: TextStyle(fontSize: 7 * scaleW, color: Colors.black54),
+            ),
           ),
-          alignment: Alignment.centerLeft,
+        ),
+        SizedBox(width: 1 * scaleW),
+        Container(
+          width: 15 * scaleW,
+          height: 24 * scaleH,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: Colors.black54),
+          ),
+          alignment: Alignment.center,
           child: Text(
-            addressText,
-            style: TextStyle(fontSize: 7 * scaleW, color: Colors.black87),
+            '선택',
+            style: TextStyle(
+              fontSize: 6 * scaleW,
+              color: Colors.black,
+            ),
           ),
         ),
       ],
@@ -151,51 +175,6 @@ class InputFieldsColumn extends StatelessWidget {
   }
 }
 
-
-  Widget _labeledInputWithButton(String label, String hint, double scaleW, double scaleH) {
-  return Row(
-    crossAxisAlignment: CrossAxisAlignment.center,
-    children: [
-      Text(label, style: TextStyle(color: Colors.black, fontSize: 4 * scaleW)),
-      SizedBox(width: 6 * scaleW),
-      Expanded(
-        child: Container(
-          height: 24 * scaleH,
-          padding: EdgeInsets.symmetric(horizontal: 8 * scaleW),
-          decoration: BoxDecoration(
-            color: const Color(0xFFE0E0E0),
-            borderRadius: BorderRadius.circular(0),
-            border: Border.all(color: const Color(0xFFAAAAAA)),
-          ),
-          alignment: Alignment.centerLeft,
-          child: Text(
-            hint,
-            style: TextStyle(fontSize: 7 * scaleW, color: Colors.black54),
-          ),
-        ),
-      ),
-      SizedBox(width: 1 * scaleW),
-      Container(
-        width: 15 * scaleW,
-        height: 24 * scaleH,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: Colors.black54),
-        ),
-        alignment: Alignment.center,
-  child: Text(
-    '선택',
-    style: TextStyle(
-      fontSize: 6 * scaleW,
-      color: Colors.black,
-    ),
-  ),
-      ),
-    ],
-  );
-}
-
-// 자주가는 장소 등록 '등록' 버튼
 class RegisterButton extends StatelessWidget {
   final double scaleW;
   final double scaleH;
