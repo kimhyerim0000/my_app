@@ -290,6 +290,7 @@ class BottomControlPanel extends StatelessWidget {
     );
   }
 }
+//
 class WeatherSummaryBox extends StatelessWidget {
   final double scaleW;
 
