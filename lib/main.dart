@@ -1,6 +1,7 @@
 // ✅ Smart Shoe Cabinet UI (모듈화 완료 + 상단 회색 박스 클래스 적용)
 import 'package:flutter/material.dart';
 import 'ui2_screen.dart'; // ✅ UI_2 화면 import
+import 'ui3_screen.dart';
 
 void main() {
   runApp(const SmartUIApp());
@@ -142,6 +143,12 @@ class SideButton extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const UI2Screen()),
+          );
+        }
+        if (label == "적정 온습도 설정관리") {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const UI3Screen()),
           );
         }
       },
