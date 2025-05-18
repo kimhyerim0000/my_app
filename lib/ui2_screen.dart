@@ -9,7 +9,23 @@ class UI2Screen extends StatefulWidget {
 
 class _UI2ScreenState extends State<UI2Screen> {
   final TextEditingController inputController = TextEditingController();
-  String registeredAddress = '';
+  List<String> registeredAddresses = ['', '', '']; // 주소 1~3 저장용
+
+  void registerAddress() {
+    String input = inputController.text.trim();
+    if (input.isEmpty) return;
+
+    setState(() {
+      // 비어있는 첫 번째 슬롯에 등록
+      for (int i = 0; i < registeredAddresses.length; i++) {
+        if (registeredAddresses[i].isEmpty) {
+          registeredAddresses[i] = input;
+          break;
+        }
+      }
+      inputController.clear(); // 입력창 비우기
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,11 +86,7 @@ class _UI2ScreenState extends State<UI2Screen> {
                     RegisterButton(
                       scaleW: scaleW,
                       scaleH: scaleH,
-                      onTap: () {
-                        setState(() {
-                          registeredAddress = inputController.text;
-                        });
-                      },
+                      onTap: registerAddress,
                     ),
                   ],
                 ),
@@ -82,7 +94,7 @@ class _UI2ScreenState extends State<UI2Screen> {
                 InputFieldsColumn(
                   scaleW: scaleW,
                   scaleH: scaleH,
-                  address1Hint: registeredAddress.isEmpty ? '주소 1' : registeredAddress,
+                  hints: registeredAddresses,
                 ),
               ],
             ),
@@ -93,27 +105,23 @@ class _UI2ScreenState extends State<UI2Screen> {
   }
 }
 
-class InputFieldsColumn extends StatefulWidget {
+// 주소 1~3 표시용
+class InputFieldsColumn extends StatelessWidget {
   final double scaleW;
   final double scaleH;
-  final String address1Hint;
+  final List<String> hints;
 
   const InputFieldsColumn({
     super.key,
     required this.scaleW,
     required this.scaleH,
-    required this.address1Hint,
+    required this.hints,
   });
 
   @override
-  State<InputFieldsColumn> createState() => _InputFieldsColumnState();
-}
-
-class _InputFieldsColumnState extends State<InputFieldsColumn> {
-  @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(6 * widget.scaleW),
+      padding: EdgeInsets.all(6 * scaleW),
       decoration: BoxDecoration(
         color: const Color(0xFFCCCCCC),
         borderRadius: BorderRadius.circular(0),
@@ -121,11 +129,11 @@ class _InputFieldsColumnState extends State<InputFieldsColumn> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _labeledInputWithButton('주소1', widget.address1Hint, widget.scaleW, widget.scaleH),
-          SizedBox(height: 6 * widget.scaleH),
-          _labeledInputWithButton('주소2', '주소 2', widget.scaleW, widget.scaleH),
-          SizedBox(height: 6 * widget.scaleH),
-          _labeledInputWithButton('주소3', '주소 3', widget.scaleW, widget.scaleH),
+          _labeledInputWithButton('주소1', hints[0].isEmpty ? '주소 1' : hints[0], scaleW, scaleH),
+          SizedBox(height: 6 * scaleH),
+          _labeledInputWithButton('주소2', hints[1].isEmpty ? '주소 2' : hints[1], scaleW, scaleH),
+          SizedBox(height: 6 * scaleH),
+          _labeledInputWithButton('주소3', hints[2].isEmpty ? '주소 3' : hints[2], scaleW, scaleH),
         ],
       ),
     );
@@ -175,6 +183,7 @@ class _InputFieldsColumnState extends State<InputFieldsColumn> {
   }
 }
 
+// 등록 버튼
 class RegisterButton extends StatelessWidget {
   final double scaleW;
   final double scaleH;
