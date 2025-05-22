@@ -2,8 +2,12 @@
 import 'package:flutter/material.dart';
 import 'ui2_screen.dart'; // ✅ UI_2 화면 import
 import 'ui3_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
 //커밋용
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized(); // Flutter 엔진 초기화
+  await Firebase.initializeApp();
+
   runApp(const SmartUIApp());
 }
 
