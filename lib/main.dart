@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'ui2_screen.dart'; // ✅ UI_2 화면 import
 import 'ui3_screen.dart';
-
+//커밋용
 void main() {
   runApp(const SmartUIApp());
 }
