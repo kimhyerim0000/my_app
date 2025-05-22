@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-
+/* 1. 주소1/2/3 등록하고 main.dart로 이동해도 변수 유지됨
+  2. 주소1/2/3 선택 버튼 누르면 main.dart의 AddressSection값이 해당 문자열로 변경
+ */
 class UI2Screen extends StatefulWidget {
   const UI2Screen({super.key});
 
