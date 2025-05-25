@@ -13,12 +13,20 @@ void main() async {
   );
   runApp(const SmartUIApp());
 }
-Future<String> getImageUrl(String imageName) async {
-  final ref = FirebaseStorage.instance.ref().child('images/$imageName');
-  final url = await ref.getDownloadURL();
-  print('✅ 이미지 URL: $url');
-  return url;
+Future<String> getImageUrl(String path) async {
+  try {
+    final ref = FirebaseStorage.instance.ref().child(path);
+    final url = await ref.getDownloadURL();
+    print('✅ URL: $url');
+    return url;
+  } catch (e) {
+    print('❌ getImageUrl 오류 발생: $e');
+    rethrow;
+  }
 }
+
+
+
 
 class SmartUIApp extends StatelessWidget {
   const SmartUIApp({super.key});
@@ -64,31 +72,33 @@ class _UIScreenState extends State<UIScreen> {
           ),
           child: Padding(
             padding: EdgeInsets.all(12 * scaleW),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: 10 * scaleH),
-                ImageWithControlsBox(scaleW: scaleW, scaleH: scaleH),
-                SizedBox(height: 10 * scaleH),
-                const SensorBoxesRow(),
-                SizedBox(height: 10 * scaleH),
-                AddressSection(scaleW: scaleW, scaleH: scaleH),
-                SizedBox(height: 15 * scaleH),
-                
-                BottomControlPanel(
-                  scaleW: scaleW,
-                  autoDry: autoDry,
-                  heater: heater,
-                  led: led,
-                  onToggle: (type, value) {
-                    setState(() {
-                      if (type == 'autoDry') autoDry = value;
-                      if (type == 'heater') heater = value;
-                      if (type == 'led') led = value;
-                    });
-                  },
-                ),
-              ],
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 10 * scaleH),
+                  ImageWithControlsBox(scaleW: scaleW, scaleH: scaleH),
+                  SizedBox(height: 10 * scaleH),
+                  const SensorBoxesRow(),
+                  SizedBox(height: 10 * scaleH),
+                  AddressSection(scaleW: scaleW, scaleH: scaleH),
+                  SizedBox(height: 15 * scaleH),
+
+                  BottomControlPanel(
+                    scaleW: scaleW,
+                    autoDry: autoDry,
+                    heater: heater,
+                    led: led,
+                    onToggle: (type, value) {
+                      setState(() {
+                        if (type == 'autoDry') autoDry = value;
+                        if (type == 'heater') heater = value;
+                        if (type == 'led') led = value;
+                      });
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -118,32 +128,29 @@ class ImageWithControlsBox extends StatelessWidget {
             width: 70 * scaleW,
             height: 70 * scaleH,
             decoration: BoxDecoration(
-              color: const Color(0xFFE0E0E0),
-              border: Border.all(color: Colors.grey.shade500),
               borderRadius: BorderRadius.circular(8 * scaleW),
+              color: Colors.grey[200], // 로딩 중 배경용
             ),
+            clipBehavior: Clip.hardEdge,
             child: FutureBuilder<String>(
-              future: getImageUrl('나이키 에어포스 로우 화이트 그레이.webp'), // Firebase에 있는 이미지 이름
+              future: getImageUrl('test/test.jpg'),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const CircularProgressIndicator();
+                  return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
-                  return const Icon(Icons.error, color: Colors.red);
+                  return const Center(child: Icon(Icons.error, color: Colors.red));
                 } else {
-                  return ClipRRect(
-                    borderRadius: BorderRadius.circular(8 * scaleW),
-                    child: Image.network(
-                      snapshot.data!,
-                      fit: BoxFit.cover,
-                      width: 70 * scaleW,
-                      height: 70 * scaleH,
-                    ),
+                  return Image.network(
+                    snapshot.data!,
+                    fit: BoxFit.cover, // ✅ 박스에 꽉 차게
+                    width: 70 * scaleW,
+                    height: 70 * scaleH,
                   );
                 }
               },
             ),
-
           ),
+
           SizedBox(width: 10 * scaleW),
           Column(
             children: [
