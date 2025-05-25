@@ -19,7 +19,7 @@ class _UI3ScreenState extends State<UI3Screen> {
     final scaleH = size.height / 300;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFE0E0E0), // ✅ 회색 배경
+      backgroundColor: const Color(0xFFE0E0E0),
       body: Center(
         child: Container(
           width: 200 * scaleW,
@@ -38,11 +38,15 @@ class _UI3ScreenState extends State<UI3Screen> {
           ),
           child: Stack(
             children: [
-              // 뒤로가기 버튼
               Align(
                 alignment: Alignment.topLeft,
                 child: GestureDetector(
-                  onTap: () => Navigator.pop(context),
+                  onTap: () {
+                    Navigator.pop(context, {
+                      'temp': tempValue,
+                      'humidity': humidityValue,
+                    });
+                  },
                   child: Icon(
                     Icons.arrow_left,
                     size: 20 * scaleW,
@@ -50,8 +54,6 @@ class _UI3ScreenState extends State<UI3Screen> {
                   ),
                 ),
               ),
-
-              // 내용
               Positioned(
                 top: 30 * scaleH,
                 left: 0,
@@ -64,26 +66,36 @@ class _UI3ScreenState extends State<UI3Screen> {
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           _settingBox(
-                            scaleW,
-                            scaleH,
                             title: "적정 온도 설정",
-                            value: "${tempValue.toInt()}°C",
-                            onEdit: () {
+                            value: tempValue,
+                            onIncrease: () {
                               setState(() {
                                 tempValue += 1;
                               });
                             },
+                            onDecrease: () {
+                              setState(() {
+                                tempValue -= 1;
+                              });
+                            },
+                            scaleW: scaleW,
+                            scaleH: scaleH,
                           ),
                           _settingBox(
-                            scaleW,
-                            scaleH,
                             title: "적정 습도 설정",
-                            value: "${humidityValue.toInt()}%",
-                            onEdit: () {
+                            value: humidityValue,
+                            onIncrease: () {
                               setState(() {
                                 humidityValue += 1;
                               });
                             },
+                            onDecrease: () {
+                              setState(() {
+                                humidityValue -= 1;
+                              });
+                            },
+                            scaleW: scaleW,
+                            scaleH: scaleH,
                           ),
                         ],
                       ),
@@ -130,10 +142,14 @@ class _UI3ScreenState extends State<UI3Screen> {
     );
   }
 
-  Widget _settingBox(double scaleW, double scaleH,
-      {required String title,
-        required String value,
-        required VoidCallback onEdit}) {
+  Widget _settingBox({
+    required String title,
+    required double value,
+    required VoidCallback onIncrease,
+    required VoidCallback onDecrease,
+    required double scaleW,
+    required double scaleH,
+  }) {
     return Column(
       children: [
         Text(title,
@@ -150,17 +166,20 @@ class _UI3ScreenState extends State<UI3Screen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(value, style: TextStyle(fontSize: 5 * scaleW)),
-              ElevatedButton(
-                onPressed: onEdit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(horizontal: 6 * scaleW),
-                ),
-                child: Text("수정",
-                    style: TextStyle(
-                        color: Colors.black, fontSize: 4 * scaleW)),
-              )
+              IconButton(
+                icon: const Icon(Icons.remove),
+                onPressed: onDecrease,
+                iconSize: 14 * scaleW,
+                padding: EdgeInsets.zero,
+              ),
+              Text("${value.toInt()}",
+                  style: TextStyle(fontSize: 5 * scaleW)),
+              IconButton(
+                icon: const Icon(Icons.add),
+                onPressed: onIncrease,
+                iconSize: 14 * scaleW,
+                padding: EdgeInsets.zero,
+              ),
             ],
           ),
         ),

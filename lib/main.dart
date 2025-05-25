@@ -13,20 +13,12 @@ void main() async {
   );
   runApp(const SmartUIApp());
 }
-Future<String> getImageUrl(String path) async {
-  try {
-    final ref = FirebaseStorage.instance.ref().child(path);
-    final url = await ref.getDownloadURL();
-    print('✅ URL: $url');
-    return url;
-  } catch (e) {
-    print('❌ getImageUrl 오류 발생: $e');
-    rethrow;
-  }
+Future<String> getImageUrl(String imageName) async {
+  final ref = FirebaseStorage.instance.ref().child('images/$imageName');
+  final url = await ref.getDownloadURL();
+  print('✅ 이미지 URL: $url');
+  return url;
 }
-
-
-
 
 class SmartUIApp extends StatelessWidget {
   const SmartUIApp({super.key});
@@ -52,6 +44,9 @@ class _UIScreenState extends State<UIScreen> {
   bool autoDry = false;
   bool heater = false;
   bool led = false;
+  double tempValue = 25.0;
+  double humidityValue = 55.0;
+
 
   @override
   Widget build(BuildContext context) {
@@ -72,33 +67,44 @@ class _UIScreenState extends State<UIScreen> {
           ),
           child: Padding(
             padding: EdgeInsets.all(12 * scaleW),
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: 10 * scaleH),
-                  ImageWithControlsBox(scaleW: scaleW, scaleH: scaleH),
-                  SizedBox(height: 10 * scaleH),
-                  const SensorBoxesRow(),
-                  SizedBox(height: 10 * scaleH),
-                  AddressSection(scaleW: scaleW, scaleH: scaleH),
-                  SizedBox(height: 15 * scaleH),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: 10 * scaleH),
+                ImageWithControlsBox(
+                  scaleW: scaleW,
+                  scaleH: scaleH,
+                  onSettingsChanged: (newTemp, newHumidity) {
+                    setState(() {
+                      tempValue = newTemp;
+                      humidityValue = newHumidity;
+                    });
+                  },
+                ),
 
-                  BottomControlPanel(
-                    scaleW: scaleW,
-                    autoDry: autoDry,
-                    heater: heater,
-                    led: led,
-                    onToggle: (type, value) {
-                      setState(() {
-                        if (type == 'autoDry') autoDry = value;
-                        if (type == 'heater') heater = value;
-                        if (type == 'led') led = value;
-                      });
-                    },
-                  ),
-                ],
-              ),
+                SizedBox(height: 10 * scaleH),
+                SensorBoxesRow(
+                  temp: tempValue,
+                  humidity: humidityValue,
+                ),
+                SizedBox(height: 10 * scaleH),
+                AddressSection(scaleW: scaleW, scaleH: scaleH),
+                SizedBox(height: 15 * scaleH),
+
+                BottomControlPanel(
+                  scaleW: scaleW,
+                  autoDry: autoDry,
+                  heater: heater,
+                  led: led,
+                  onToggle: (type, value) {
+                    setState(() {
+                      if (type == 'autoDry') autoDry = value;
+                      if (type == 'heater') heater = value;
+                      if (type == 'led') led = value;
+                    });
+                  },
+                ),
+              ],
             ),
           ),
         ),
@@ -110,8 +116,9 @@ class _UIScreenState extends State<UIScreen> {
 class ImageWithControlsBox extends StatelessWidget {
   final double scaleW;
   final double scaleH;
-
-  const ImageWithControlsBox({super.key, required this.scaleW, required this.scaleH});
+  final void Function(double, double) onSettingsChanged;
+  const ImageWithControlsBox({super.key, required this.scaleW, required this.scaleH,
+    required this.onSettingsChanged,});
 
   @override
   Widget build(BuildContext context) {
@@ -128,36 +135,57 @@ class ImageWithControlsBox extends StatelessWidget {
             width: 70 * scaleW,
             height: 70 * scaleH,
             decoration: BoxDecoration(
+              color: const Color(0xFFE0E0E0),
+              border: Border.all(color: Colors.grey.shade500),
               borderRadius: BorderRadius.circular(8 * scaleW),
-              color: Colors.grey[200], // 로딩 중 배경용
             ),
-            clipBehavior: Clip.hardEdge,
             child: FutureBuilder<String>(
-              future: getImageUrl('test/test.jpg'),
+              future: getImageUrl('나이키 에어포스 로우 화이트 그레이.webp'), // Firebase에 있는 이미지 이름
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const CircularProgressIndicator();
                 } else if (snapshot.hasError) {
-                  return const Center(child: Icon(Icons.error, color: Colors.red));
+                  return const Icon(Icons.error, color: Colors.red);
                 } else {
-                  return Image.network(
-                    snapshot.data!,
-                    fit: BoxFit.cover, // ✅ 박스에 꽉 차게
-                    width: 70 * scaleW,
-                    height: 70 * scaleH,
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(8 * scaleW),
+                    child: Image.network(
+                      snapshot.data!,
+                      fit: BoxFit.cover,
+                      width: 70 * scaleW,
+                      height: 70 * scaleH,
+                    ),
                   );
                 }
               },
             ),
-          ),
 
+          ),
           SizedBox(width: 10 * scaleW),
           Column(
             children: [
               // 아래에 해당 버튼이 정의됨
               SideButton(label: "자주 가는 장소 등록", scaleW: scaleW, scaleH: scaleH),
               SizedBox(height: 10 * scaleH),
-              SideButton(label: "적정 온습도 설정관리", scaleW: scaleW, scaleH: scaleH),
+              SideButton(
+                label: "적정 온습도 설정관리",
+                scaleW: scaleW,
+                scaleH: scaleH,
+                onTap: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const UI3Screen()),
+                  );
+
+                  if (result != null && result is Map) {
+                    onSettingsChanged(
+                      result['temp'] ?? 25.0,
+                      result['humidity'] ?? 55.0,
+                    );
+                  }
+                },
+              ),
+
             ],
           ),
         ],
@@ -170,13 +198,14 @@ class SideButton extends StatelessWidget {
   final String label;
   final double scaleW;
   final double scaleH;
+  final VoidCallback? onTap;
 
-  const SideButton({super.key, required this.label, required this.scaleW, required this.scaleH});
+  const SideButton({super.key, required this.label, required this.scaleW, required this.scaleH,this.onTap,});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
+      onTap: onTap ?? () {
         if (label == "자주 가는 장소 등록") {
           Navigator.push(
             context,
@@ -210,7 +239,14 @@ class SideButton extends StatelessWidget {
 
 
 class SensorBoxesRow extends StatelessWidget {
-  const SensorBoxesRow({super.key});
+  final double temp;
+  final double humidity;
+
+  const SensorBoxesRow({
+    super.key,
+    required this.temp,
+    required this.humidity,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -221,8 +257,8 @@ class SensorBoxesRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        _sensorBox("내부 온도\n\t\t\t 20도", scaleW, scaleH),
-        _sensorBox("내부 습도\n\t\t\t 40%", scaleW, scaleH),
+        _sensorBox("내부 온도\n\t\t\t ${temp.toInt()}도", scaleW, scaleH),
+        _sensorBox("내부 습도\n\t\t\t  ${humidity.toInt()}%", scaleW, scaleH),
       ],
     );
   }
@@ -245,6 +281,7 @@ class SensorBoxesRow extends StatelessWidget {
     );
   }
 }
+
 
 class AddressSection extends StatelessWidget {
   final double scaleW;
@@ -374,5 +411,4 @@ class WeatherSummaryBox extends StatelessWidget {
     );
   }
 }
-
 
