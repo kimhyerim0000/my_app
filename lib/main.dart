@@ -3,12 +3,21 @@ import 'package:flutter/material.dart';
 import 'ui2_screen.dart'; // ✅ UI_2 화면 import
 import 'ui3_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'firebase_options.dart';
 //커밋용
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Flutter 엔진 초기화
-  await Firebase.initializeApp();
-
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const SmartUIApp());
+}
+Future<String> getImageUrl(String imageName) async {
+  final ref = FirebaseStorage.instance.ref().child('images/$imageName');
+  final url = await ref.getDownloadURL();
+  print('✅ 이미지 URL: $url');
+  return url;
 }
 
 class SmartUIApp extends StatelessWidget {
@@ -113,9 +122,27 @@ class ImageWithControlsBox extends StatelessWidget {
               border: Border.all(color: Colors.grey.shade500),
               borderRadius: BorderRadius.circular(8 * scaleW),
             ),
-            child: const Center(
-              child: Text("이미지 자리", style: TextStyle(color: Colors.grey)),
+            child: FutureBuilder<String>(
+              future: getImageUrl('나이키 에어포스 로우 화이트 그레이.webp'), // Firebase에 있는 이미지 이름
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const CircularProgressIndicator();
+                } else if (snapshot.hasError) {
+                  return const Icon(Icons.error, color: Colors.red);
+                } else {
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(8 * scaleW),
+                    child: Image.network(
+                      snapshot.data!,
+                      fit: BoxFit.cover,
+                      width: 70 * scaleW,
+                      height: 70 * scaleH,
+                    ),
+                  );
+                }
+              },
             ),
+
           ),
           SizedBox(width: 10 * scaleW),
           Column(
