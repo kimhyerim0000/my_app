@@ -4,8 +4,9 @@ import 'ui2_screen.dart'; // ✅ UI_2 화면 import
 import 'ui3_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'firebase_options.dart';
-//커밋용
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
@@ -14,10 +15,18 @@ void main() async {
   runApp(const SmartUIApp());
 }
 Future<String> getImageUrl(String imageName) async {
-  final ref = FirebaseStorage.instance.ref().child('images/$imageName');
+  final ref = FirebaseStorage.instance.ref().child('test/$imageName');
   final url = await ref.getDownloadURL();
   print('✅ 이미지 URL: $url');
   return url;
+}
+void saveTemperatureAndHumidity(double temp, double humidity) async {
+  final dbRef = FirebaseDatabase.instance.ref();
+
+  await dbRef.child("shoeCabinet/settings").set({
+    'temperature': temp,
+    'humidity': humidity,
+  });
 }
 
 class SmartUIApp extends StatelessWidget {
@@ -79,6 +88,8 @@ class _UIScreenState extends State<UIScreen> {
                       tempValue = newTemp;
                       humidityValue = newHumidity;
                     });
+                    //데이터베이스에 저장
+                    saveTemperatureAndHumidity(newTemp, newHumidity);
                   },
                 ),
 
@@ -87,22 +98,25 @@ class _UIScreenState extends State<UIScreen> {
                   temp: tempValue,
                   humidity: humidityValue,
                 ),
-                SizedBox(height: 10 * scaleH),
-                AddressSection(scaleW: scaleW, scaleH: scaleH),
-                SizedBox(height: 15 * scaleH),
-
-                BottomControlPanel(
-                  scaleW: scaleW,
-                  autoDry: autoDry,
-                  heater: heater,
-                  led: led,
-                  onToggle: (type, value) {
-                    setState(() {
-                      if (type == 'autoDry') autoDry = value;
-                      if (type == 'heater') heater = value;
-                      if (type == 'led') led = value;
-                    });
-                  },
+                SizedBox(height: 5 * scaleH),
+                Flexible( // 👈 여기에 적용
+                  child: AddressSection(scaleW: scaleW, scaleH: scaleH),
+                ),
+                SizedBox(height: 5 * scaleH),
+                Flexible(
+                  child: BottomControlPanel(
+                    scaleW: scaleW,
+                    autoDry: autoDry,
+                    heater: heater,
+                    led: led,
+                    onToggle: (type, value) {
+                      setState(() {
+                        if (type == 'autoDry') autoDry = value;
+                        if (type == 'heater') heater = value;
+                        if (type == 'led') led = value;
+                      });
+                    },
+                  ),
                 ),
               ],
             ),
@@ -140,7 +154,7 @@ class ImageWithControlsBox extends StatelessWidget {
               borderRadius: BorderRadius.circular(8 * scaleW),
             ),
             child: FutureBuilder<String>(
-              future: getImageUrl('나이키 에어포스 로우 화이트 그레이.webp'), // Firebase에 있는 이미지 이름
+              future: getImageUrl('test.jpg'), // Firebase에 있는 이미지 이름
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const CircularProgressIndicator();
@@ -301,6 +315,7 @@ class AddressSection extends StatelessWidget {
         Text(
           '내일 눈 소식 있어요! 미끄럼 조심하고 따뜻한 신발 준비해주세요❄️👟',
           style: TextStyle(fontSize: 5 * scaleW, color: Colors.black87),
+          maxLines: 2,
         ),
       ],
     );
