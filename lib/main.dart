@@ -43,6 +43,7 @@ class SmartUIApp extends StatelessWidget {
 }
 
 class UIScreen extends StatefulWidget {
+
   const UIScreen({super.key});
 
   @override
@@ -55,7 +56,8 @@ class _UIScreenState extends State<UIScreen> {
   bool led = false;
   double tempValue = 25.0;
   double humidityValue = 55.0;
-
+  String registeredAddress = '자주 가는 장소를 등록해주세요!'; // ✅ 초기 기본값 설정
+  List<String> registeredAddresses = ['', '', ''];
 
   @override
   Widget build(BuildContext context) {
@@ -91,6 +93,12 @@ class _UIScreenState extends State<UIScreen> {
                     //데이터베이스에 저장
                     saveTemperatureAndHumidity(newTemp, newHumidity);
                   },
+                  onAddressSelected: (selectedAddress) {
+                    setState(() {
+                      registeredAddress = selectedAddress;
+                    });
+                  },
+                  registeredAddresses: registeredAddresses,
                 ),
 
                 SizedBox(height: 10 * scaleH),
@@ -100,7 +108,7 @@ class _UIScreenState extends State<UIScreen> {
                 ),
                 SizedBox(height: 5 * scaleH),
                 Flexible( // 👈 여기에 적용
-                  child: AddressSection(scaleW: scaleW, scaleH: scaleH),
+                  child: AddressSection(scaleW: scaleW, scaleH: scaleH,address: registeredAddress, ),
                 ),
                 SizedBox(height: 5 * scaleH),
                 Flexible(
@@ -131,8 +139,11 @@ class ImageWithControlsBox extends StatelessWidget {
   final double scaleW;
   final double scaleH;
   final void Function(double, double) onSettingsChanged;
+  final void Function(String) onAddressSelected;
+  final List<String> registeredAddresses;
+
   const ImageWithControlsBox({super.key, required this.scaleW, required this.scaleH,
-    required this.onSettingsChanged,});
+    required this.onSettingsChanged,required this.onAddressSelected,required this.registeredAddresses,});
 
   @override
   Widget build(BuildContext context) {
@@ -179,7 +190,25 @@ class ImageWithControlsBox extends StatelessWidget {
           Column(
             children: [
               // 아래에 해당 버튼이 정의됨
-              SideButton(label: "자주 가는 장소 등록", scaleW: scaleW, scaleH: scaleH),
+              SideButton(
+                label: "자주 가는 장소 등록",
+                scaleW: scaleW,
+                scaleH: scaleH,
+                onTap: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => UI2Screen(
+                        addresses: registeredAddresses, // ✅ 주소 리스트 넘기기
+                      ),
+                    ),
+                  );
+                  if (result != null && result is String) {
+                    onAddressSelected(result);
+                  }
+                },
+              ),
+
               SizedBox(height: 10 * scaleH),
               SideButton(
                 label: "적정 온습도 설정관리",
@@ -223,7 +252,11 @@ class SideButton extends StatelessWidget {
         if (label == "자주 가는 장소 등록") {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const UI2Screen()),
+              MaterialPageRoute(
+                builder: (_) => UI2Screen(
+                  addresses: registeredAddresses, // ✅ 이 리스트는 UIScreen에서 관리 중
+                ),
+              )
           );
         }
         if (label == "적정 온습도 설정관리") {
@@ -300,17 +333,18 @@ class SensorBoxesRow extends StatelessWidget {
 class AddressSection extends StatelessWidget {
   final double scaleW;
   final double scaleH;
+  final String address;
 
-  const AddressSection({super.key, required this.scaleW, required this.scaleH});
+  const AddressSection({super.key, required this.scaleW, required this.scaleH,required this.address,});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('자주가는 장소 [학교]', style: TextStyle(fontSize: 7 * scaleW, color: Colors.grey[800])),
+        Text('자주가는 장소', style: TextStyle(fontSize: 7 * scaleW, color: Colors.grey[800])),
         SizedBox(height: 3 * scaleH),
-        AddressBox(scaleW: scaleW, scaleH: scaleH),
+        AddressBox(scaleW: scaleW, scaleH: scaleH,address: address,),
         SizedBox(height: 3 * scaleH),
         Text(
           '내일 눈 소식 있어요! 미끄럼 조심하고 따뜻한 신발 준비해주세요❄️👟',
@@ -325,8 +359,9 @@ class AddressSection extends StatelessWidget {
 class AddressBox extends StatelessWidget {
   final double scaleW;
   final double scaleH;
+  final String address;
 
-  const AddressBox({super.key, required this.scaleW, required this.scaleH});
+  const AddressBox({super.key, required this.scaleW, required this.scaleH,required this.address,});
 
   @override
   Widget build(BuildContext context) {
@@ -339,7 +374,7 @@ class AddressBox extends StatelessWidget {
         borderRadius: BorderRadius.circular(6 * scaleW),
       ),
       child: Text(
-        '충청남도 아산시 탕정면 선문로221번길 70',
+        address,
         style: TextStyle(fontSize: 6 * scaleW, color: Colors.black87),
       ),
     );

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
   2. 주소1/2/3 선택 버튼 누르면 main.dart의 AddressSection값이 해당 문자열로 변경
  */
 class UI2Screen extends StatefulWidget {
-  const UI2Screen({super.key});
+  const UI2Screen({super.key, required this.addresses});
 
   @override
   State<UI2Screen> createState() => _UI2ScreenState();
@@ -11,7 +11,13 @@ class UI2Screen extends StatefulWidget {
 
 class _UI2ScreenState extends State<UI2Screen> {
   final TextEditingController inputController = TextEditingController();
-  List<String> registeredAddresses = ['', '', '']; // 주소 1~3 저장용
+  late List<String> registeredAddresses;
+
+  @override
+  void initState() {
+    super.initState();
+    registeredAddresses = widget.addresses; // ✅ 전달받은 주소 리스트를 상태로 사용
+  }
 
   void registerAddress() {
     String input = inputController.text.trim();
@@ -97,6 +103,9 @@ class _UI2ScreenState extends State<UI2Screen> {
                   scaleW: scaleW,
                   scaleH: scaleH,
                   hints: registeredAddresses,
+                  onSelect: (selectedAddress) {
+                    Navigator.pop(context, selectedAddress); // ✅ main.dart로 값 전달
+                  },
                 ),
               ],
             ),
@@ -112,12 +121,15 @@ class InputFieldsColumn extends StatelessWidget {
   final double scaleW;
   final double scaleH;
   final List<String> hints;
+  final void Function(String) onSelect; // ✅ 추가
+
 
   const InputFieldsColumn({
     super.key,
     required this.scaleW,
     required this.scaleH,
     required this.hints,
+    required this.onSelect,
   });
 
   @override
@@ -164,22 +176,29 @@ class InputFieldsColumn extends StatelessWidget {
           ),
         ),
         SizedBox(width: 1 * scaleW),
-        Container(
-          width: 15 * scaleW,
-          height: 24 * scaleH,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: Colors.black54),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            '선택',
-            style: TextStyle(
-              fontSize: 6 * scaleW,
-              color: Colors.black,
+        GestureDetector(
+          onTap: () {
+            if (hint != '주소 1' && hint != '주소 2' && hint != '주소 3') {
+              onSelect(hint); // ✅ 선택된 주소를 상위로 전달
+            }
+          },
+          child: Container(
+            width: 15 * scaleW,
+            height: 24 * scaleH,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: Colors.black54),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              '선택',
+              style: TextStyle(
+                fontSize: 6 * scaleW,
+                color: Colors.black,
+              ),
             ),
           ),
-        ),
+        )
       ],
     );
   }
