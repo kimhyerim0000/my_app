@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
   2. 주소1/2/3 선택 버튼 누르면 main.dart의 AddressSection값이 해당 문자열로 변경
  */
 class UI2Screen extends StatefulWidget {
+  final List<String> addresses;
   const UI2Screen({super.key, required this.addresses});
 
   @override
