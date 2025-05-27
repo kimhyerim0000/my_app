@@ -20,6 +20,7 @@ Future<String> getImageUrl(String imageName) async {
   print('✅ 이미지 URL: $url');
   return url;
 }
+//온습도 저장 함수
 void saveTemperatureAndHumidity(double temp, double humidity) async {
   final dbRef = FirebaseDatabase.instance.ref();
 
@@ -27,6 +28,12 @@ void saveTemperatureAndHumidity(double temp, double humidity) async {
     'temperature': temp,
     'humidity': humidity,
   });
+}
+// main.dart에 address 저장 변수
+void saveSelectedAddressToFirebase(String selectedAddress) async {
+  final dbRef = FirebaseDatabase.instance.ref();
+  await dbRef.child("shoeCabinet/selectedAddress").set(selectedAddress);
+  print('✅ 선택된 주소 Firebase에 저장 완료: $selectedAddress');
 }
 
 class SmartUIApp extends StatelessWidget {
@@ -50,6 +57,7 @@ class UIScreen extends StatefulWidget {
   State<UIScreen> createState() => _UIScreenState();
 }
 
+
 class _UIScreenState extends State<UIScreen> {
   bool autoDry = false;
   bool heater = false;
@@ -58,15 +66,60 @@ class _UIScreenState extends State<UIScreen> {
   double humidityValue = 55.0;
   String registeredAddress = '자주 가는 장소를 등록해주세요!'; // ✅ 초기 기본값 설정
   List<String> registeredAddresses = ['', '', ''];
-  
+
+  void applySettings(double temp, double humidity) {
+    setState(() {
+      tempValue = temp;
+      humidityValue = humidity;
+    });
+    saveTemperatureAndHumidity(temp, humidity); // DB에도 저장
+  }
+
+  void loadInitialSettingsFromFirebase() async {
+    final dbRef = FirebaseDatabase.instance.ref();
+    final snapshot = await dbRef.child("shoeCabinet/settings").get();
+
+    if (snapshot.exists) {
+      final data = snapshot.value as Map;
+      final double temp = (data['temperature'] ?? 25.0).toDouble();
+      final double humidity = (data['humidity'] ?? 55.0).toDouble();
+
+
+
+      setState(() {
+        tempValue = temp;
+        humidityValue = humidity;
+      });
+
+      // ✅ 불러온 값을 onSettingsChanged로 전달
+      applySettings(temp, humidity);
+    } else {
+      print("ℹ️ 저장된 설정이 없습니다.");
+    }
+  }
+  // address변수 불러오는 함수
+  void loadSelectedAddressFromFirebase() async {
+    final dbRef = FirebaseDatabase.instance.ref();
+    final snapshot = await dbRef.child("shoeCabinet/selectedAddress").get();
+
+    if (snapshot.exists) {
+      setState(() {
+        registeredAddress = snapshot.value.toString();
+      });
+      print('✅ 선택된 주소 불러오기 성공: $registeredAddress');
+    } else {
+      print('ℹ️ 선택된 주소가 없습니다.');
+    }
+  }
   // "shoeCabinet/addresses" 위치에 registeredAddresses 리스트 값 저장
   void saveAddressesToFirebase(List<String> addresses) async {
     final dbRef = FirebaseDatabase.instance.ref();
-    await dbRef.child("shoeCabinet/addresses").set({
-      '0': addresses[0],
-      '1': addresses[1],
-      '2': addresses[2],
-    });
+    final addressMap = {
+      for (int i = 0; i < addresses.length; i++) i.toString(): addresses[i],
+    };
+
+    await dbRef.child("shoeCabinet/addresses").set(addressMap);
+
     print('✅ 주소 3개 Firebase에 저장 완료');
   }
   void loadAddressesFromFirebase() async {
@@ -87,10 +140,15 @@ class _UIScreenState extends State<UIScreen> {
       print('ℹ️ 저장된 주소가 없습니다.');
     }
   }
+
+
+//flutter 앱 시작할때 파이어베이스에서 변수 가져오는거
   @override
   void initState() {
     super.initState();
     loadAddressesFromFirebase(); // ✅ 앱 시작 시 불러옴
+    loadInitialSettingsFromFirebase(); //온습도 초기화
+    loadSelectedAddressFromFirebase(); //address초기화
   }
   @override
   Widget build(BuildContext context) {
@@ -123,13 +181,14 @@ class _UIScreenState extends State<UIScreen> {
                       tempValue = newTemp;
                       humidityValue = newHumidity;
                     });
-                    //데이터베이스에 저장
+                    //데이터베이스에 저장, 불러오기
                     saveTemperatureAndHumidity(newTemp, newHumidity);
                   },
                   onAddressSelected: (selectedAddress) {
                     setState(() {
                       registeredAddress = selectedAddress;
                     });
+                    saveSelectedAddressToFirebase(selectedAddress);
                   },
                   // DB에 list변수 저장, 일반변수 저장. ,registeredAddresses
                   registeredAddresses: registeredAddresses,
