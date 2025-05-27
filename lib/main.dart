@@ -58,7 +58,40 @@ class _UIScreenState extends State<UIScreen> {
   double humidityValue = 55.0;
   String registeredAddress = '자주 가는 장소를 등록해주세요!'; // ✅ 초기 기본값 설정
   List<String> registeredAddresses = ['', '', ''];
+  
+  // "shoeCabinet/addresses" 위치에 registeredAddresses 리스트 값 저장
+  void saveAddressesToFirebase(List<String> addresses) async {
+    final dbRef = FirebaseDatabase.instance.ref();
+    await dbRef.child("shoeCabinet/addresses").set({
+      '0': addresses[0],
+      '1': addresses[1],
+      '2': addresses[2],
+    });
+    print('✅ 주소 3개 Firebase에 저장 완료');
+  }
+  void loadAddressesFromFirebase() async {
+    final dbRef = FirebaseDatabase.instance.ref();
+    final snapshot = await dbRef.child("shoeCabinet/addresses").get();
 
+    if (snapshot.exists) {
+      final data = snapshot.value as Map;
+      setState(() {
+        registeredAddresses = [
+          data['0'] ?? '',
+          data['1'] ?? '',
+          data['2'] ?? '',
+        ];
+      });
+      print('✅ 주소 불러오기 성공: $registeredAddresses');
+    } else {
+      print('ℹ️ 저장된 주소가 없습니다.');
+    }
+  }
+  @override
+  void initState() {
+    super.initState();
+    loadAddressesFromFirebase(); // ✅ 앱 시작 시 불러옴
+  }
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -98,6 +131,7 @@ class _UIScreenState extends State<UIScreen> {
                       registeredAddress = selectedAddress;
                     });
                   },
+                  // DB에 list변수 저장, 일반변수 저장. ,registeredAddresses
                   registeredAddresses: registeredAddresses,
                 ),
 
@@ -194,6 +228,7 @@ class ImageWithControlsBox extends StatelessWidget {
                 label: "자주 가는 장소 등록",
                 scaleW: scaleW,
                 scaleH: scaleH,
+                addresses: registeredAddresses,
                 onTap: () async {
                   final result = await Navigator.push(
                     context,
@@ -242,8 +277,8 @@ class SideButton extends StatelessWidget {
   final double scaleW;
   final double scaleH;
   final VoidCallback? onTap;
-
-  const SideButton({super.key, required this.label, required this.scaleW, required this.scaleH,this.onTap,});
+  final List<String>? addresses;
+  const SideButton({super.key, required this.label, required this.scaleW, required this.scaleH,this.onTap,this.addresses,});
 
   @override
   Widget build(BuildContext context) {
@@ -254,7 +289,7 @@ class SideButton extends StatelessWidget {
             context,
               MaterialPageRoute(
                 builder: (_) => UI2Screen(
-                  addresses: registeredAddresses, // ✅ 이 리스트는 UIScreen에서 관리 중
+                  addresses: addresses ?? ['', '', ''], //
                 ),
               )
           );
