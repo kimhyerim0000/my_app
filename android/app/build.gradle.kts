@@ -31,14 +31,15 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
 
-//        externalNativeBuild {
-//            cmake {
-//                cppFlags
-//            }
-//        }
+        externalNativeBuild {
+            cmake {
+                cppFlags
+            }
+        }
         ndk {
             abiFilters.add("armeabi-v7a")
             abiFilters.add("arm64-v8a")
+            abiFilters.add("x86_64") //web용 실행
         }
     }
     externalNativeBuild {
