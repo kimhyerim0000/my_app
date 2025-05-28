@@ -6,6 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'firebase_options.dart';
+import 'ui4_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -135,8 +136,18 @@ class _UIScreenState extends State<UIScreen> {
                 Flexible( // 👈 여기에 적용
                   child: AddressSection(scaleW: scaleW, scaleH: scaleH,address: registeredAddress, ),
                 ),
-                SizedBox(height: 5 * scaleH),
-                WeatherSummaryBox(scaleW: scaleW),
+                // SizedBox(height: 5 * scaleH),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const UI4Screen()),
+                    );
+                  },
+                  child: WeatherSummaryBox(scaleW: scaleW, scaleH: scaleH)
+                  ,
+                )
+
                 // Flexible(
                 //   child: BottomControlPanel(
                 //     scaleW: scaleW,
@@ -421,29 +432,44 @@ class AddressBox extends StatelessWidget {
 
 class WeatherSummaryBox extends StatelessWidget {
   final double scaleW;
+  final double scaleH;
 
-  const WeatherSummaryBox({super.key, required this.scaleW});
+  const WeatherSummaryBox({super.key, required this.scaleW, required this.scaleH});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(6 * scaleW),
+      width: 170 * scaleW,              // ImageWithControlsBox 기준 가로 길이
+      height: 70 * scaleH,            // 2배 높이
       decoration: BoxDecoration(
         color: const Color(0xFFCCCCCC),
         borderRadius: BorderRadius.circular(6 * scaleW),
       ),
-      child: Column(
+      padding: EdgeInsets.all(6 * scaleW),
+      child:Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.ac_unit, color: Colors.blue, size: 14 * scaleW),
-          Text('수', style: TextStyle(fontSize: 6 * scaleW)),
-          Text('최고 28°', style: TextStyle(fontSize: 6 * scaleW)),
-          Text('최저 14°', style: TextStyle(fontSize: 6 * scaleW)),
+          Text(
+            '날씨 예보',
+            style: TextStyle(fontSize: 7 * scaleW, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 6 * scaleH),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: const [
+              Text("☀️", style: TextStyle(fontSize: 14)),
+              Text("🌧", style: TextStyle(fontSize: 14)),
+              Text("☁️", style: TextStyle(fontSize: 14)),
+              Text("⛈", style: TextStyle(fontSize: 14)),
+              Text("❄️", style: TextStyle(fontSize: 14)),
+            ],
+          ),
         ],
       ),
     );
   }
 }
+
 
 // class BottomControlPanel extends StatelessWidget {
 //   final double scaleW;

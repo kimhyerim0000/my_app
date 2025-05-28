@@ -102,7 +102,7 @@ void parseForecastResponse(Map<String, dynamic> jsonData) {
 }
 
 
-Future<void> fetchForecast({
+Future<List<Map<String, String>>> fetchForecast({
   required String serviceKey,
   required int nx,
   required int ny,
@@ -110,6 +110,7 @@ Future<void> fetchForecast({
   final encodedKey = serviceKey;
   final baseDate = getBaseDate();
   final baseTime = getBaseTime();
+
   const pageNo = 1;
   const numOfRows = 1000;
   const dataType = "JSON";
@@ -128,14 +129,44 @@ Future<void> fetchForecast({
 
   if (response.statusCode == 200) {
     final jsonData = jsonDecode(response.body);
-    parseForecastResponse(jsonData);
-    // print("→ 요청 좌표: x=$nx, y=$ny");
+    final items = jsonData["response"]?["body"]?["items"]?["item"];
 
-  } else {
-    print("❌ 요청 실패: ${response.statusCode}");
-    
+    if (items is List) {
+      return items
+          .where((item) =>
+          ["TMP", "PTY", "POP", "REH"].contains(item["category"]))
+          .map<Map<String, String>>((item) {
+        final labelMap = {
+          "TMP": "기온(℃)",
+          "PTY": "강수형태",
+          "POP": "강수확률(%)",
+          "REH": "습도(%)"
+        };
+        final valueMap = {
+          "0": "없음",
+          "1": "비",
+          "2": "비/눈",
+          "3": "눈",
+          "4": "소나기"
+        };
+
+        String category = item["category"];
+        String value = item["fcstValue"];
+        if (category == "PTY") {
+          value = valueMap[value] ?? value;
+        }
+        return {
+          "label": labelMap[category] ?? category,
+          "value": value,
+          "fcstTime": item["fcstTime"]
+        };
+      }).toList();
+    }
   }
+
+  return [];
 }
+
 
 void main() {
   const apiKey = "4TEeEbCQ7DrRqU1z1MlvSAIFG1Did9WbvUx8GJ6nquLWxEYz7%2BUqu2ToWCArhD4VXIiD3L4hrRHHEazI2I3pkA%3D%3D"; // 여기에 진짜 키 넣기
