@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:charset_converter/charset_converter.dart';
-import 'package:intl/intl.dart';
 
 void main() {
   runApp(const MaterialApp(
@@ -35,7 +34,8 @@ class _KmaAFSForecastViewState extends State<KmaAFSForecastView> {
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
-        final decoded = await CharsetConverter.decode("euc-kr", response.bodyBytes);
+        final decoded = await CharsetConverter.decode(
+            "euc-kr", response.bodyBytes);
         print('📦 응답 원본:\n$decoded');
 
         final lines = decoded
@@ -49,29 +49,21 @@ class _KmaAFSForecastViewState extends State<KmaAFSForecastView> {
         for (final line in lines) {
           final parts = line.split(RegExp(r'\s+'));
           if (parts.length >= 17) {
-            final tmFcRaw = parts[1].trim();
-            final tmEfRaw = parts[2].trim();
+            final sky = parts[15];
+            final prep = parts[16];
             final ta = parts[13];
-            final wf = parts[16];
+            final st = parts[14];
 
-            String monthDay = '';
-            if (tmFcRaw.length == 12 && RegExp(r'^\d{12}\$').hasMatch(tmFcRaw)) {
-              try {
-                final date = DateFormat('yyyyMMddHHmm').parseStrict(tmFcRaw);
-                monthDay = DateFormat('MMdd').format(date);
-              } catch (e) {
-                print('⚠️ TM_FC 파싱 실패: $tmFcRaw → $e');
-              }
-            }
+            if (!['DB01', 'DB02', 'DB03', 'DB04'].contains(sky)) continue;
+            if (!['1', '2', '3', '4', '0'].contains(prep)) continue;
 
             parsed.add({
-              '날짜': monthDay,
-
+              '하늘상태': sky,
+              '강수유무': prep,
+              '강수확률': st,
               '기온': ta,
-              '예보': wf.replaceAll(RegExp(r'^"|"$'), ''),
+              '강수코드': prep,
             });
-          } else {
-            print('❗ 조건 불충분: $line');
           }
         }
 
@@ -82,11 +74,60 @@ class _KmaAFSForecastViewState extends State<KmaAFSForecastView> {
     } catch (e) {
       setState(() {
         forecastList = [
-          {'날짜': '', '기온': '', '예보': e.toString()}
+          {'하늘상태': '에러', '강수유무': '', '강수확률': '', '기온': '', '강수코드': ''}
         ];
       });
     }
   }
+
+  IconData getWeatherIcon(String sky) {
+    switch (sky) {
+      case 'DB01':
+        return Icons.wb_sunny;
+      case 'DB02':
+        return Icons.wb_cloudy;
+      case 'DB03':
+        return Icons.cloud;
+      case 'DB04':
+        return Icons.cloud_queue;
+      default:
+        return Icons.help_outline;
+    }
+  }
+
+  String getSkyText(String sky) {
+    switch (sky) {
+      case 'DB01':
+        return '맑음';
+      case 'DB02':
+        return '구름조금';
+      case 'DB03':
+        return '구름많음';
+      case 'DB04':
+        return '흐림';
+      default:
+        return '미확인';
+    }
+  }
+
+  String getPrecipText(String prep) {
+    switch (prep) {
+      case '1':
+        return '비';
+      case '2':
+        return '비/눈';
+      case '3':
+        return '눈';
+      case '4':
+        return '눈/비';
+      case '0':
+        return '없음';
+      default:
+        return '';
+    }
+  }
+
+  bool hasPrecip(String prep) => ['1', '2', '3', '4'].contains(prep);
 
   @override
   Widget build(BuildContext context) {
@@ -99,9 +140,23 @@ class _KmaAFSForecastViewState extends State<KmaAFSForecastView> {
         itemCount: forecastList.length,
         itemBuilder: (context, index) {
           final item = forecastList[index];
+          final sky = item['하늘상태'] ?? '';
+          final prep = item['강수유무'] ?? '';
+          final st = item['강수확률'] ?? '';
+          final ta = item['기온'] ?? '';
+          final code = item['강수코드'] ?? '';
           return ListTile(
-            title: Text('${item['날짜']} : ${item['예보']}'),
-            subtitle: Text('기온: ${item['기온']}℃'),
+            leading: Icon(getWeatherIcon(sky)),
+            title: Text(getSkyText(sky)),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('강수유무: ${getPrecipText(prep)}'),
+                if (hasPrecip(prep)) Text('강수확률: $st%'),
+                Text('기온: $ta℃'),
+                if (hasPrecip(prep)) Text('강수코드: $code'),
+              ],
+            ),
           );
         },
       ),
