@@ -59,16 +59,7 @@ class _UIScreenState extends State<UIScreen> {
   String registeredAddress = '자주 가는 장소를 등록해주세요!'; // ✅ 초기 기본값 설정
   List<String> registeredAddresses = ['', '', ''];
   
-  // "shoeCabinet/addresses" 위치에 registeredAddresses 리스트 값 저장
-  void saveAddressesToFirebase(List<String> addresses) async {
-    final dbRef = FirebaseDatabase.instance.ref();
-    await dbRef.child("shoeCabinet/addresses").set({
-      '0': addresses[0],
-      '1': addresses[1],
-      '2': addresses[2],
-    });
-    print('✅ 주소 3개 Firebase에 저장 완료');
-  }
+
   void loadAddressesFromFirebase() async {
     final dbRef = FirebaseDatabase.instance.ref();
     final snapshot = await dbRef.child("shoeCabinet/addresses").get();
@@ -145,21 +136,22 @@ class _UIScreenState extends State<UIScreen> {
                   child: AddressSection(scaleW: scaleW, scaleH: scaleH,address: registeredAddress, ),
                 ),
                 SizedBox(height: 5 * scaleH),
-                Flexible(
-                  child: BottomControlPanel(
-                    scaleW: scaleW,
-                    autoDry: autoDry,
-                    heater: heater,
-                    led: led,
-                    onToggle: (type, value) {
-                      setState(() {
-                        if (type == 'autoDry') autoDry = value;
-                        if (type == 'heater') heater = value;
-                        if (type == 'led') led = value;
-                      });
-                    },
-                  ),
-                ),
+                WeatherSummaryBox(scaleW: scaleW),
+                // Flexible(
+                //   child: BottomControlPanel(
+                //     scaleW: scaleW,
+                //     autoDry: autoDry,
+                //     heater: heater,
+                //     led: led,
+                //     onToggle: (type, value) {
+                //       setState(() {
+                //         if (type == 'autoDry') autoDry = value;
+                //         if (type == 'heater') heater = value;
+                //         if (type == 'led') led = value;
+                //       });
+                //     },
+                //   ),
+                // ),
               ],
             ),
           ),
@@ -179,6 +171,16 @@ class ImageWithControlsBox extends StatelessWidget {
   const ImageWithControlsBox({super.key, required this.scaleW, required this.scaleH,
     required this.onSettingsChanged,required this.onAddressSelected,required this.registeredAddresses,});
 
+  // "shoeCabinet/addresses" 위치에 registeredAddresses 리스트 값 저장
+  void saveAddressesToFirebase(List<String> addresses) async {
+    final dbRef = FirebaseDatabase.instance.ref();
+    await dbRef.child("shoeCabinet/addresses").set({
+      '0': addresses[0],
+      '1': addresses[1],
+      '2': addresses[2],
+    });
+    print('✅ 주소 3개 Firebase에 저장 완료');
+  }
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -240,6 +242,7 @@ class ImageWithControlsBox extends StatelessWidget {
                   );
                   if (result != null && result is String) {
                     onAddressSelected(result);
+                    saveAddressesToFirebase(registeredAddresses);
                   }
                 },
               ),
@@ -416,61 +419,6 @@ class AddressBox extends StatelessWidget {
   }
 }
 
-class BottomControlPanel extends StatelessWidget {
-  final double scaleW;
-  final bool autoDry;
-  final bool heater;
-  final bool led;
-  final void Function(String, bool) onToggle;
-
-  const BottomControlPanel({
-    super.key,
-    required this.scaleW,
-    required this.autoDry,
-    required this.heater,
-    required this.led,
-    required this.onToggle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        // Column(
-        //   crossAxisAlignment: CrossAxisAlignment.start,
-        //   children: [
-        //     Icon(Icons.ac_unit, color: Colors.blue, size: 14 * scaleW),
-        //     Text('수', style: TextStyle(fontSize: 6 * scaleW)),
-        //     Text('최고 28°', style: TextStyle(fontSize: 6 * scaleW)),
-        //     Text('최저 14°', style: TextStyle(fontSize: 6 * scaleW)),
-        //   ],
-        // ),
-        WeatherSummaryBox(scaleW: scaleW),
-
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildSwitch('자동 건조 기능', autoDry, (val) => onToggle('autoDry', val)),
-            _buildSwitch('히터 on/off', heater, (val) => onToggle('heater', val)),
-            _buildSwitch('LED on/off', led, (val) => onToggle('led', val)),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSwitch(String label, bool value, ValueChanged<bool> onChanged) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: TextStyle(fontSize: 6 * scaleW)),
-        Switch(value: value, onChanged: onChanged),
-      ],
-    );
-  }
-}
-//
 class WeatherSummaryBox extends StatelessWidget {
   final double scaleW;
 
@@ -496,4 +444,60 @@ class WeatherSummaryBox extends StatelessWidget {
     );
   }
 }
+
+// class BottomControlPanel extends StatelessWidget {
+//   final double scaleW;
+//   final bool autoDry;
+//   final bool heater;
+//   final bool led;
+//   final void Function(String, bool) onToggle;
+//
+//   const BottomControlPanel({
+//     super.key,
+//     required this.scaleW,
+//     required this.autoDry,
+//     required this.heater,
+//     required this.led,
+//     required this.onToggle,
+//   });
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return Row(
+//       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//       children: [
+//         // Column(
+//         //   crossAxisAlignment: CrossAxisAlignment.start,
+//         //   children: [
+//         //     Icon(Icons.ac_unit, color: Colors.blue, size: 14 * scaleW),
+//         //     Text('수', style: TextStyle(fontSize: 6 * scaleW)),
+//         //     Text('최고 28°', style: TextStyle(fontSize: 6 * scaleW)),
+//         //     Text('최저 14°', style: TextStyle(fontSize: 6 * scaleW)),
+//         //   ],
+//         // ),
+//         WeatherSummaryBox(scaleW: scaleW),
+//
+//         Column(
+//           crossAxisAlignment: CrossAxisAlignment.start,
+//           children: [
+//             _buildSwitch('자동 건조 기능', autoDry, (val) => onToggle('autoDry', val)),
+//             _buildSwitch('히터 on/off', heater, (val) => onToggle('heater', val)),
+//             _buildSwitch('LED on/off', led, (val) => onToggle('led', val)),
+//           ],
+//         ),
+//       ],
+//     );
+//   }
+//
+//   Widget _buildSwitch(String label, bool value, ValueChanged<bool> onChanged) {
+//     return Row(
+//       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//       children: [
+//         Text(label, style: TextStyle(fontSize: 6 * scaleW)),
+//         Switch(value: value, onChanged: onChanged),
+//       ],
+//     );
+//   }
+// }
+//
 
