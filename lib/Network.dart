@@ -37,7 +37,7 @@ Future<void> fetchForecast({
   required int nx,
   required int ny,
 }) async {
-  final encodedKey = Uri.encodeComponent(serviceKey);
+  final encodedKey = serviceKey;
   final baseDate = getBaseDate(); // 내일
   final baseTime = getBaseTime(); // "0000"
 

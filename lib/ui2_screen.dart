@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 
+
 /* 1. 주소1/2/3 등록하고 main.dart로 이동해도 변수 유지됨
   2. 주소1/2/3 선택 버튼 누르면 main.dart의 AddressSection값이 해당 문자열로 변경
  */
@@ -18,11 +19,12 @@ Future<List<String>> fetchRegisteredAddresses() async {
 
   if (snapshot.exists) {
     final data = snapshot.value as Map<dynamic, dynamic>;
-    return List.generate(3, (i) => (data['address${i + 1}'] ?? '').toString());
+    return List.generate(3, (i) => (data[i] ?? '').toString());
   } else {
-    return List.generate(3, (i) => ''); // 초기화용
+    return List.generate(3, (i) => '');
   }
 }
+
 
 class _UI2ScreenState extends State<UI2Screen> {
   final TextEditingController inputController = TextEditingController();
@@ -31,6 +33,7 @@ class _UI2ScreenState extends State<UI2Screen> {
   @override
   void initState() {
     super.initState();
+    //초기화 왜하노
     registeredAddresses = ['', '', '']; // 초기화
     loadAddressesFromFirebase();
   }
@@ -52,8 +55,9 @@ class _UI2ScreenState extends State<UI2Screen> {
 
           // 저장
           FirebaseDatabase.instance
-              .ref("shoeCabinet/addresses/address${i + 1}")
+              .ref("shoeCabinet/addresses/$i")  // ✅ 배열 방식으로 저장
               .set(input);
+
 
           break;
         }
