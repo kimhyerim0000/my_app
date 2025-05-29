@@ -64,9 +64,10 @@ class _UIScreenState extends State<UIScreen> {
   void loadAddressesFromFirebase() async {
     final dbRef = FirebaseDatabase.instance.ref();
     final snapshot = await dbRef.child("shoeCabinet/addresses").get();
+    final raw = snapshot.value;
 
     if (snapshot.exists) {
-      final data = snapshot.value as Map;
+      final data = snapshot.value as Map<dynamic, dynamic>;
       setState(() {
         registeredAddresses = [
           data['0'] ?? '',
@@ -75,8 +76,11 @@ class _UIScreenState extends State<UIScreen> {
         ];
       });
       print('✅ 주소 불러오기 성공: $registeredAddresses');
+    } else if (raw is List) {
+      final data = raw.cast<dynamic>().asMap(); // 인덱스 기반 map처럼 사용 가능
+      // 또는: raw[0], raw[1] 직접 접근
     } else {
-      print('ℹ️ 저장된 주소가 없습니다.');
+      print("⚠️ 예기치 않은 타입: ${raw.runtimeType}");
     }
   }
   @override

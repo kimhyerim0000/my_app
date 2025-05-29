@@ -1,17 +1,3 @@
-// import 'address_to_gridxy_korea.dart';
-//
-// void main() {
-//   String si = "경기도";
-//   String gu = "수원시팔달구";
-//   String dong = "화서1동";
-//
-//   final xy = addressToGridXY[si]?[gu]?[dong];
-//   if (xy != null) {
-//     print("x=${xy['x']}, y=${xy['y']}");
-//   } else {
-//     print("⚠️ 격자 좌표를 찾을 수 없습니다.");
-//   }
-// }
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'address_to_gridxy_korea.dart';
@@ -31,7 +17,7 @@ String getBaseTime() {
   return hour.toString().padLeft(2, '0') + "00";
 }
 
-
+// request 응답 변수 정리해서 출력함수
 void parseForecastResponse(Map<String, dynamic> jsonData) {
   final items = jsonData["response"]?["body"]?["items"]?["item"];
 
@@ -101,7 +87,7 @@ void parseForecastResponse(Map<String, dynamic> jsonData) {
   }
 }
 
-
+//fetchForecast
 Future<List<Map<String, String>>> fetchForecast({
   required String serviceKey,
   required int nx,

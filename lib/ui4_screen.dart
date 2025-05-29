@@ -33,17 +33,22 @@ class _UI4ScreenState extends State<UI4Screen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("날씨 예보")),
+      // futureBuilder
       body: FutureBuilder<List<Map<String, String>>>(
+        // request 변수 담아서 비동기 처리
         future: forecastData,
+        // api 호출중....ㄱ오류시 결과출력
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return Center(child: Text("❌ 오류 발생: ${snapshot.error}"));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            //실제로 데이터가 비어있는 상태
             return const Center(child: Text("예보 데이터 없음"));
           }
-
+          
+          //api 데이터를 성공적으로 불러왔을때
           final data = snapshot.data!;
           return ListView.builder(
             itemCount: data.length,
