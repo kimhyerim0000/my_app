@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_database/firebase_database.dart';
+
 /* 1. 주소1/2/3 등록하고 main.dart로 이동해도 변수 유지됨
   2. 주소1/2/3 선택 버튼 누르면 main.dart의 AddressSection값이 해당 문자열로 변경
  */
@@ -10,6 +12,18 @@ class UI2Screen extends StatefulWidget {
   State<UI2Screen> createState() => _UI2ScreenState();
 }
 
+Future<List<String>> fetchRegisteredAddresses() async {
+  final dbRef = FirebaseDatabase.instance.ref("shoeCabinet/addresses");
+  final snapshot = await dbRef.get();
+
+  if (snapshot.exists) {
+    final data = snapshot.value as Map<dynamic, dynamic>;
+    return List.generate(3, (i) => (data['address${i + 1}'] ?? '').toString());
+  } else {
+    return List.generate(3, (i) => ''); // 초기화용
+  }
+}
+
 class _UI2ScreenState extends State<UI2Screen> {
   final TextEditingController inputController = TextEditingController();
   late List<String> registeredAddresses;
@@ -17,24 +31,37 @@ class _UI2ScreenState extends State<UI2Screen> {
   @override
   void initState() {
     super.initState();
-    registeredAddresses = widget.addresses; // ✅ 전달받은 주소 리스트를 상태로 사용
+    registeredAddresses = ['', '', '']; // 초기화
+    loadAddressesFromFirebase();
   }
-
+ //데이터베이스 가져오는코드
+  void loadAddressesFromFirebase() async {
+    final fetched = await fetchRegisteredAddresses();
+    setState(() {
+      registeredAddresses = fetched;
+    });
+  }
   void registerAddress() {
     String input = inputController.text.trim();
     if (input.isEmpty) return;
 
     setState(() {
-      // 비어있는 첫 번째 슬롯에 등록
-      for (int i = 0; i < registeredAddresses.length; i++) {
+      for (int i = 0; i < registeredAddresses.length; i++){
         if (registeredAddresses[i].isEmpty) {
           registeredAddresses[i] = input;
+
+          // 저장
+          FirebaseDatabase.instance
+              .ref("shoeCabinet/addresses/address${i + 1}")
+              .set(input);
+
           break;
         }
       }
-      inputController.clear(); // 입력창 비우기
+      inputController.clear();
     });
   }
+
 
   @override
   Widget build(BuildContext context) {
