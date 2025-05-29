@@ -34,7 +34,7 @@ class _UI2ScreenState extends State<UI2Screen> {
   void initState() {
     super.initState();
     //초기화 왜하노
-    registeredAddresses = ['', '', '']; // 초기화
+    // registeredAddresses = ['', '', '']; // 초기화
     loadAddressesFromFirebase();
   }
  //데이터베이스 가져오는코드
