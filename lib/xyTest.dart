@@ -12,7 +12,7 @@ String getBaseDate() {
 String getBaseTime() {
   final now = DateTime.now();
   int hour = now.hour;
-  if (now.minute < 45) hour -= 1;
+  // if (now.minute < 45) hour -= 1;
   if (hour < 0) hour = 23;
   return hour.toString().padLeft(2, '0') + "00";
 }
@@ -153,22 +153,50 @@ Future<List<Map<String, String>>> fetchForecast({
   return [];
 }
 
+void main() async {
+  const serviceKey = "4TEeEbCQ7DrRqU1z1MlvSAIFG1Did9WbvUx8GJ6nquLWxEYz7%2BUqu2ToWCArhD4VXIiD3L4hrRHHEazI2I3pkA%3D%3D";
 
-void main() {
-  const apiKey = "4TEeEbCQ7DrRqU1z1MlvSAIFG1Did9WbvUx8GJ6nquLWxEYz7%2BUqu2ToWCArhD4VXIiD3L4hrRHHEazI2I3pkA%3D%3D"; // 여기에 진짜 키 넣기
-
-  String si = "경기도";
-  String gu = "수원시팔달구";
-  String dong = "화서1동";
+  String si = "서울특별시";
+  String gu = "종로구";
+  String dong = "청운효자동";
 
   final coords = addressToGridXY[si]?[gu]?[dong];
+
   if (coords == null) {
     print("⚠️ 격자 좌표를 찾을 수 없습니다.");
-
     return;
   }
 
-  final int nx = coords["x"]!;
-  final int ny = coords["y"]!;
-  fetchForecast(serviceKey: apiKey, nx: nx, ny: ny);
+  final forecast = await fetchForecast(
+    serviceKey: serviceKey,
+    nx: coords['x']!,
+    ny: coords['y']!,
+  );
+
+  if (forecast.isEmpty) {
+    print("📭 예보 데이터가 없습니다.");
+  } else {
+    print("✅ 예보 데이터 (${forecast.length}개):");
+    for (final item in forecast) {
+      print("${item["fcstTime"]}시 | ${item["label"]}: ${item["value"]}");
+    }
+  }
 }
+// void main() {
+//   const apiKey = "4TEeEbCQ7DrRqU1z1MlvSAIFG1Did9WbvUx8GJ6nquLWxEYz7%2BUqu2ToWCArhD4VXIiD3L4hrRHHEazI2I3pkA%3D%3D"; // 여기에 진짜 키 넣기
+//
+//   String si = "경기도";
+//   String gu = "수원시팔달구";
+//   String dong = "화서1동";
+//
+//   final coords = addressToGridXY[si]?[gu]?[dong];
+//   if (coords == null) {
+//     print("⚠️ 격자 좌표를 찾을 수 없습니다.");
+//
+//     return;
+//   }
+//
+//   final int nx = coords["x"]!;
+//   final int ny = coords["y"]!;
+//   fetchForecast(serviceKey: apiKey, nx: nx, ny: ny);
+// }
