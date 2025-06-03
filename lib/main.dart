@@ -15,21 +15,13 @@ void main() async {
   );
   runApp(const SmartUIApp());
 }
+// storage에서 이미지 가져오기
 Future<String> getImageUrl(String imageName) async {
   final ref = FirebaseStorage.instance.ref().child('test/$imageName');
   final url = await ref.getDownloadURL();
   print('✅ 이미지 URL: $url');
   return url;
 }
-void saveTemperatureAndHumidity(double temp, double humidity) async {
-  final dbRef = FirebaseDatabase.instance.ref();
-
-  await dbRef.child("shoeCabinet/settings").set({
-    'temperature': temp,
-    'humidity': humidity,
-  });
-}
-
 class SmartUIApp extends StatelessWidget {
   const SmartUIApp({super.key});
 
@@ -49,6 +41,8 @@ class UIScreen extends StatefulWidget {
 
   @override
   State<UIScreen> createState() => _UIScreenState();
+
+
 }
 
 class _UIScreenState extends State<UIScreen> {
@@ -59,35 +53,52 @@ class _UIScreenState extends State<UIScreen> {
   double humidityValue = 55.0;
   String registeredAddress = '자주 가는 장소를 등록해주세요!'; // ✅ 초기 기본값 설정
   // List<String> registeredAddresses = ['', '', ''];
-  
 
-  // void loadAddressesFromFirebase() async {
-  //   final dbRef = FirebaseDatabase.instance.ref();
-  //   final snapshot = await dbRef.child("shoeCabinet/addresses").get();
-  //   final raw = snapshot.value;
-  //
-  //   if (snapshot.exists) {
-  //     final data = snapshot.value as Map<dynamic, dynamic>;
-  //     setState(() {
-  //       registeredAddresses = [
-  //         data['0'] ?? '',
-  //         data['1'] ?? '',
-  //         data['2'] ?? '',
-  //       ];
-  //     });
-  //     print('✅ 주소 불러오기 성공: $registeredAddresses');
-  //   } else if (raw is List) {
-  //     final data = raw.cast<dynamic>().asMap(); // 인덱스 기반 map처럼 사용 가능
-  //     // 또는: raw[0], raw[1] 직접 접근
-  //   } else {
-  //     print("⚠️ 예기치 않은 타입: ${raw.runtimeType}");
-  //   }
-  // }
   @override
   void initState() {
     super.initState();
-    // loadAddressesFromFirebase(); // ✅ 앱 시작 시 불러옴
+    loadSelectedAddressFromFirebase(); //registeredAddress값을 불러옴.
+    loadCurrentTemperatureAndHumidity(); //아두이노가 기록한 온습도를 main에 표시함.
   }
+  void loadSelectedAddressFromFirebase() async {
+    final dbRef = FirebaseDatabase.instance.ref();
+    final snapshot = await dbRef.child("shoeCabinet/selectedAddress").get();
+
+    if (snapshot.exists) {
+      final selectedAddress = snapshot.value.toString(); // 데이터 변환
+      setState(() {
+        registeredAddress = selectedAddress;
+      });
+      print('✅ 불러온 주소: $selectedAddress');
+    } else {
+      print("⚠️ selectedAddress 값이 없음");
+    }
+  }
+  void loadCurrentTemperatureAndHumidity() async {
+    final dbRef = FirebaseDatabase.instance.ref();
+
+    try {
+      final tempSnap = await dbRef.child("current/TEMPERATURE").get();
+      final humSnap = await dbRef.child("current/HUMIDITY").get();
+
+      if (tempSnap.exists && humSnap.exists) {
+        final double temp = double.tryParse(tempSnap.value.toString()) ?? 0.0;
+        final double hum = double.tryParse(humSnap.value.toString()) ?? 0.0;
+
+        setState(() {
+          tempValue = temp;
+          humidityValue = hum;
+        });
+
+        print("✅ 온도: $temp, 습도: $hum");
+      } else {
+        print("⚠️ current/TEMPERATURE 또는 HUMIDITY 값 없음");
+      }
+    } catch (e) {
+      print("❌ 오류 발생: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -187,17 +198,6 @@ class ImageWithControlsBox extends StatelessWidget {
   const ImageWithControlsBox({super.key, required this.scaleW, required this.scaleH,
     required this.onSettingsChanged,required this.onAddressSelected,required this.registeredAddresses,});
 
-
-  // "shoeCabinet/addresses" 위치에 registeredAddresses 리스트 값 저장
-  // void saveAddressesToFirebase(List<String> addresses) async {
-  //   final dbRef = FirebaseDatabase.instance.ref();
-  //   await dbRef.child("shoeCabinet/addresses").set({
-  //     '0': addresses[0],
-  //     '1': addresses[1],
-  //     '2': addresses[2],
-  //   });
-  //   print('✅ 주소 3개 Firebase에 저장 완료');
-  // }
   @override
   Widget build(BuildContext context) {
     return Container(

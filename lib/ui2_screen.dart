@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
-
+import 'main.dart';
 
 /* 1. 주소1/2/3 등록하고 main.dart로 이동해도 변수 유지됨
   2. 주소1/2/3 선택 버튼 누르면 main.dart의 AddressSection값이 해당 문자열로 변경
@@ -40,34 +40,6 @@ class _UI2ScreenState extends State<UI2Screen> {
     // registeredAddresses = ['', '', '']; // 초기화
     loadAddressesFromFirebase();
   }
- // //데이터베이스 가져오는코드
- //  void loadAddressesFromFirebase() async {
- //    final fetched = await fetchRegisteredAddresses();
- //    setState(() {
- //      registeredAddresses = fetched;
- //    });
- //  }
- //  void registerAddress() {
- //    String input = inputController.text.trim();
- //    if (input.isEmpty) return;
- //
- //    setState(() {
- //      for (int i = 0; i < registeredAddresses.length; i++){
- //        if (registeredAddresses[i].isEmpty) {
- //          registeredAddresses[i] = input;
- //
- //          // 저장
- //          FirebaseDatabase.instance
- //              .ref("shoeCabinet/addresses/$i")  // ✅ 배열 방식으로 저장
- //              .set(input);
- //          break;
- //        }
- //      }
- //      inputController.clear();
- //    });
- //  }
-
-
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -151,8 +123,12 @@ class _UI2ScreenState extends State<UI2Screen> {
                     print("✅ 선택된 주소 저장됨: $selectedAddress");
 
                     // Navigator.pop(context); ← 메인으로 돌아갈 거면 유지
-                    Navigator.pop(context);
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (_) => const UIScreen()),
+                    );
                   },
+
                 ),
               ],
             ),
@@ -216,19 +192,19 @@ class InputFieldsColumn extends StatelessWidget {
         borderRadius: BorderRadius.circular(0),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _labeledInputWithButton('주소1', hints[0].isEmpty ? '주소 1' : hints[0], scaleW, scaleH),
-          SizedBox(height: 6 * scaleH),
-          _labeledInputWithButton('주소2', hints[1].isEmpty ? '주소 2' : hints[1], scaleW, scaleH),
-          SizedBox(height: 6 * scaleH),
-          _labeledInputWithButton('주소3', hints[2].isEmpty ? '주소 3' : hints[2], scaleW, scaleH),
-        ],
+        children: List.generate(3, (i) {
+          return Column(
+            children: [
+              _labeledInputWithButton(context,i, '주소${i + 1}', hints[i], scaleW, scaleH),
+              SizedBox(height: 6 * scaleH),
+            ],
+          );
+        }),
       ),
     );
   }
 
-  Widget _labeledInputWithButton(String label, String hint, double scaleW, double scaleH) {
+  Widget _labeledInputWithButton(BuildContext context ,int index,String label, String hint, double scaleW, double scaleH) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -273,7 +249,32 @@ class InputFieldsColumn extends StatelessWidget {
               ),
             ),
           ),
-        )
+        ),
+        SizedBox(width: 1 * scaleW),
+        GestureDetector(
+          onTap: () async {
+            final dbRef = FirebaseDatabase.instance.ref();
+            await dbRef.child("shoeCabinet/addresses/$index").set("");
+            print("🗑️ 주소 $index 삭제 완료");
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const UI2Screen()),
+            );
+          },
+          child: Container(
+            width: 15 * scaleW,
+            height: 24 * scaleH,
+            decoration: BoxDecoration(
+              color: Colors.red[200],
+              border: Border.all(color: Colors.black54),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              '삭제',
+              style: TextStyle(fontSize: 6 * scaleW, color: Colors.black),
+            ),
+          ),
+        ),
       ],
     );
   }
