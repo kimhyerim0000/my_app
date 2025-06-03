@@ -8,14 +8,26 @@ String getBaseDate() {
       "${today.month.toString().padLeft(2, '0')}"
       "${today.day.toString().padLeft(2, '0')}";
 }
-
+// 0200, 0500, 0800, 1100,1400,1700,2000, 2300
 String getBaseTime() {
+  final List<int> baseHours = [2, 5, 8, 11, 14, 17, 20, 23];
   final now = DateTime.now();
   int hour = now.hour;
-  // if (now.minute < 45) hour -= 1;
-  if (hour < 0) hour = 23;
-  return hour.toString().padLeft(2, '0') + "00";
+  int? selectedHour;
+
+  for (int i = baseHours.length - 1; i >= 0; i--) {
+    if (hour >= baseHours[i]) {
+      selectedHour = baseHours[i];
+      break;
+    }
+  }
+
+  // 00:00 ~ 01:59 사이인 경우 전날의 2300을 반환
+  selectedHour ??= 23;
+
+  return selectedHour.toString().padLeft(2, '0') + "00";
 }
+
 
 // request 응답 변수 정리해서 출력함수
 void parseForecastResponse(Map<String, dynamic> jsonData) {
