@@ -7,6 +7,9 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'firebase_options.dart';
 import 'ui4_screen.dart';
+import 'xyTest.dart';
+import 'address_to_gridxy_korea.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -150,7 +153,7 @@ class _UIScreenState extends State<UIScreen> {
                 ),
                 SizedBox(height: 5 * scaleH),
                 Flexible( // 👈 여기에 적용
-                  child: AddressSection(scaleW: scaleW, scaleH: scaleH,address: registeredAddress, ),
+                  child:  WeatherAwareAddressSection(scaleW: scaleW, scaleH: scaleH ,address: registeredAddress, ),
                 ),
                 // SizedBox(height: 5 * scaleH),
                 GestureDetector(
@@ -390,8 +393,9 @@ class AddressSection extends StatelessWidget {
   final double scaleW;
   final double scaleH;
   final String address;
+  final String weatherMessage;
 
-  const AddressSection({super.key, required this.scaleW, required this.scaleH,required this.address,});
+  const AddressSection({super.key, required this.scaleW, required this.scaleH,required this.address,required this.weatherMessage,});
 
   @override
   Widget build(BuildContext context) {
@@ -403,7 +407,7 @@ class AddressSection extends StatelessWidget {
         AddressBox(scaleW: scaleW, scaleH: scaleH,address: address,),
         SizedBox(height: 3 * scaleH),
         Text(
-          '내일 눈 소식 있어요! 미끄럼 조심하고 따뜻한 신발 준비해주세요❄️👟',
+          weatherMessage,
           style: TextStyle(fontSize: 5 * scaleW, color: Colors.black87),
           maxLines: 2,
         ),
@@ -476,6 +480,77 @@ class WeatherSummaryBox extends StatelessWidget {
     );
   }
 }
+class WeatherAwareAddressSection extends StatefulWidget {
+  final double scaleW;
+  final double scaleH;
+  final String address;
+
+  const WeatherAwareAddressSection({
+    super.key,
+    required this.scaleW,
+    required this.scaleH,
+    required this.address,
+  });
+
+  @override
+  State<WeatherAwareAddressSection> createState() => _WeatherAwareAddressSectionState();
+}
+
+class _WeatherAwareAddressSectionState extends State<WeatherAwareAddressSection> {
+  String weatherMessage = "☀️ 날씨 정보를 불러오는 중입니다...";
+
+  @override
+  void initState() {
+    super.initState();
+    loadWeatherMessage();
+  }
+
+  Future<void> loadWeatherMessage() async {
+    try {
+      // 👉 주소 → 좌표 변환 (예시: 종로구 청운효자동)
+      final coords = addressToGridXY["서울특별시"]?["종로구"]?["청운효자동"];
+      if (coords == null) {
+        setState(() {
+          weatherMessage = "⚠️ 주소 정보로 좌표를 찾을 수 없습니다.";
+        });
+        return;
+      }
+
+      final forecast = await fetchForecast(
+        serviceKey: "4TEeEbCQ7DrRqU1z1MlvSAIFG1Did9WbvUx8GJ6nquLWxEYz7%2BUqu2ToWCArhD4VXIiD3L4hrRHHEazI2I3pkA%3D%3D",
+        nx: coords['x']!,
+        ny: coords['y']!,
+      );
+
+      if (forecast.isEmpty) {
+        setState(() {
+          weatherMessage = "📭 날씨 예보 데이터를 불러올 수 없습니다.";
+        });
+        return;
+      }
+
+      final msg = generateWeatherMessage(forecast);
+      setState(() {
+        weatherMessage = msg;
+      });
+    } catch (e) {
+      setState(() {
+        weatherMessage = "❌ 날씨 정보를 불러오는 중 오류가 발생했습니다.";
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AddressSection(
+      scaleW: widget.scaleW,
+      scaleH: widget.scaleH,
+      address: widget.address,
+      weatherMessage: weatherMessage,
+    );
+  }
+}
+
 
 
 // class BottomControlPanel extends StatelessWidget {

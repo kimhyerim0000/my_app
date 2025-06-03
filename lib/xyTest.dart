@@ -98,6 +98,38 @@ void parseForecastResponse(Map<String, dynamic> jsonData) {
     print("⚠️ 예보 항목이 없습니다.");
   }
 }
+String generateWeatherMessage(List<Map<String, String>> forecast) {
+  String? pty;
+  int? pop;
+  int? tmp;
+
+  for (var item in forecast) {
+    if (item["label"] == "강수형태") pty = item["value"];
+    if (item["label"] == "강수확률(%)") pop = int.tryParse(item["value"] ?? "");
+    if (item["label"] == "기온(℃)") tmp = int.tryParse(item["value"] ?? "");
+  }
+
+  if (pty == "비" || pty == "소나기") {
+    return "🌧 우산을 꼭 챙기세요. 비가 올 예정이에요!";
+  } else if (pty == "비/눈") {
+    return "🌨 비나 눈이 내릴 수 있어요. 외출 시 주의하세요!";
+  } else if (pty == "눈") {
+    return "❄️ 눈 소식이 있어요! 미끄럼 주의하고 따뜻한 신발 준비해주세요!";
+  }
+
+  if (pop != null && pop >= 70) {
+    return "☁️ 강수확률이 높아요. 우산을 챙기는 게 좋아요!";
+  }
+
+  if (tmp != null && tmp <= 0) {
+    return "🥶 기온이 매우 낮아요. 따뜻하게 입고 나가세요!";
+  } else if (tmp != null && tmp >= 30) {
+    return "🔥 폭염 주의! 시원하게 입고 물 자주 마시세요.";
+  }
+
+  return "☀️ 내일은 대체로 맑고 좋은 날씨가 예상돼요!";
+}
+
 
 //fetchForecast
 Future<List<Map<String, String>>> fetchForecast({
@@ -184,6 +216,8 @@ void main() async {
     nx: coords['x']!,
     ny: coords['y']!,
   );
+  final weatherMessage = generateWeatherMessage(forecast);
+  print("💬 사용자에게 보여줄 멘트: $weatherMessage");
 
   if (forecast.isEmpty) {
     print("📭 예보 데이터가 없습니다.");

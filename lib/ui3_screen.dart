@@ -13,14 +13,13 @@ class _UI3ScreenState extends State<UI3Screen> {
   bool autoEnabled = false;
   bool ledEnabled = false;
   bool fanEnabled = false;
+
   // 라디오버튼의 데이터베이스 상태 적용
   @override
   void initState() {
     super.initState();
     loadSettingsFromFirebase(); // ✅ 설정값 Firebase에서 불러오기
   }
-
-
 
 
   @override
@@ -246,9 +245,9 @@ class _UI3ScreenState extends State<UI3Screen> {
     if (snapshot.exists) {
       final data = snapshot.value as Map<dynamic, dynamic>;
       setState(() {
-        autoEnabled = data['AUTO'] ?? false;
-        ledEnabled = data['LED'] ?? false;
-        fanEnabled = data['FAN'] ?? false;
+        autoEnabled = (data['AUTO'] == 1);
+        ledEnabled = (data['LED'] == 1);
+        fanEnabled = (data['FAN'] == 1);
       });
       print("✅ Firebase에서 설정값 불러오기 성공: $data");
     } else {
