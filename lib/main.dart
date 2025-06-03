@@ -58,35 +58,35 @@ class _UIScreenState extends State<UIScreen> {
   double tempValue = 25.0;
   double humidityValue = 55.0;
   String registeredAddress = '자주 가는 장소를 등록해주세요!'; // ✅ 초기 기본값 설정
-  List<String> registeredAddresses = ['', '', ''];
+  // List<String> registeredAddresses = ['', '', ''];
   
 
-  void loadAddressesFromFirebase() async {
-    final dbRef = FirebaseDatabase.instance.ref();
-    final snapshot = await dbRef.child("shoeCabinet/addresses").get();
-    final raw = snapshot.value;
-
-    if (snapshot.exists) {
-      final data = snapshot.value as Map<dynamic, dynamic>;
-      setState(() {
-        registeredAddresses = [
-          data['0'] ?? '',
-          data['1'] ?? '',
-          data['2'] ?? '',
-        ];
-      });
-      print('✅ 주소 불러오기 성공: $registeredAddresses');
-    } else if (raw is List) {
-      final data = raw.cast<dynamic>().asMap(); // 인덱스 기반 map처럼 사용 가능
-      // 또는: raw[0], raw[1] 직접 접근
-    } else {
-      print("⚠️ 예기치 않은 타입: ${raw.runtimeType}");
-    }
-  }
+  // void loadAddressesFromFirebase() async {
+  //   final dbRef = FirebaseDatabase.instance.ref();
+  //   final snapshot = await dbRef.child("shoeCabinet/addresses").get();
+  //   final raw = snapshot.value;
+  //
+  //   if (snapshot.exists) {
+  //     final data = snapshot.value as Map<dynamic, dynamic>;
+  //     setState(() {
+  //       registeredAddresses = [
+  //         data['0'] ?? '',
+  //         data['1'] ?? '',
+  //         data['2'] ?? '',
+  //       ];
+  //     });
+  //     print('✅ 주소 불러오기 성공: $registeredAddresses');
+  //   } else if (raw is List) {
+  //     final data = raw.cast<dynamic>().asMap(); // 인덱스 기반 map처럼 사용 가능
+  //     // 또는: raw[0], raw[1] 직접 접근
+  //   } else {
+  //     print("⚠️ 예기치 않은 타입: ${raw.runtimeType}");
+  //   }
+  // }
   @override
   void initState() {
     super.initState();
-    loadAddressesFromFirebase(); // ✅ 앱 시작 시 불러옴
+    // loadAddressesFromFirebase(); // ✅ 앱 시작 시 불러옴
   }
   @override
   Widget build(BuildContext context) {
@@ -119,16 +119,17 @@ class _UIScreenState extends State<UIScreen> {
                       tempValue = newTemp;
                       humidityValue = newHumidity;
                     });
-                    //데이터베이스에 저장
-                    saveTemperatureAndHumidity(newTemp, newHumidity);
+                    // //데이터베이스에 저장
+                    // saveTemperatureAndHumidity(newTemp, newHumidity);
                   },
                   onAddressSelected: (selectedAddress) {
                     setState(() {
                       registeredAddress = selectedAddress;
                     });
                   },
-                  // DB에 list변수 저장, 일반변수 저장. ,registeredAddresses
-                  registeredAddresses: registeredAddresses,
+                  registeredAddresses: const ['', '', ''],
+                  // // DB에 list변수 저장, 일반변수 저장. ,registeredAddresses
+                  // registeredAddresses: registeredAddresses,
                 ),
 
                 SizedBox(height: 10 * scaleH),
@@ -186,16 +187,17 @@ class ImageWithControlsBox extends StatelessWidget {
   const ImageWithControlsBox({super.key, required this.scaleW, required this.scaleH,
     required this.onSettingsChanged,required this.onAddressSelected,required this.registeredAddresses,});
 
+
   // "shoeCabinet/addresses" 위치에 registeredAddresses 리스트 값 저장
-  void saveAddressesToFirebase(List<String> addresses) async {
-    final dbRef = FirebaseDatabase.instance.ref();
-    await dbRef.child("shoeCabinet/addresses").set({
-      '0': addresses[0],
-      '1': addresses[1],
-      '2': addresses[2],
-    });
-    print('✅ 주소 3개 Firebase에 저장 완료');
-  }
+  // void saveAddressesToFirebase(List<String> addresses) async {
+  //   final dbRef = FirebaseDatabase.instance.ref();
+  //   await dbRef.child("shoeCabinet/addresses").set({
+  //     '0': addresses[0],
+  //     '1': addresses[1],
+  //     '2': addresses[2],
+  //   });
+  //   print('✅ 주소 3개 Firebase에 저장 완료');
+  // }
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -250,14 +252,11 @@ class ImageWithControlsBox extends StatelessWidget {
                   final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => UI2Screen(
-                        addresses: registeredAddresses, // ✅ 주소 리스트 넘기기
-                      ),
+                      builder: (_) => const UI2Screen(),
                     ),
                   );
                   if (result != null && result is String) {
                     onAddressSelected(result);
-                    saveAddressesToFirebase(registeredAddresses);
                   }
                 },
               ),
@@ -296,21 +295,24 @@ class SideButton extends StatelessWidget {
   final double scaleH;
   final VoidCallback? onTap;
   final List<String>? addresses;
-  const SideButton({super.key, required this.label, required this.scaleW, required this.scaleH,this.onTap,this.addresses,});
+  final void Function(String)? onAddressSelected;
+  const SideButton({super.key, required this.label, required this.scaleW, required this.scaleH,this.onTap,this.addresses,this.onAddressSelected,});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap ?? () {
+      onTap: onTap ?? () async {
         if (label == "자주 가는 장소 등록") {
-          Navigator.push(
+          final result = await Navigator.push(
             context,
-              MaterialPageRoute(
-                builder: (_) => UI2Screen(
-                  addresses: addresses ?? ['', '', ''], //
-                ),
-              )
+            MaterialPageRoute(
+              builder: (_) => const UI2Screen(),
+            ),
           );
+
+          if (result != null && result is String) {
+            onAddressSelected?.call(result); // ✅ 전달
+          }
         }
         if (label == "적정 온습도 설정관리") {
           Navigator.push(
@@ -319,6 +321,7 @@ class SideButton extends StatelessWidget {
           );
         }
       },
+
       child: Container(
         width: 80 * scaleW,
         height: 30 * scaleH,

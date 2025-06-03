@@ -6,8 +6,7 @@ import 'package:firebase_database/firebase_database.dart';
   2. 주소1/2/3 선택 버튼 누르면 main.dart의 AddressSection값이 해당 문자열로 변경
  */
 class UI2Screen extends StatefulWidget {
-  final List<String> addresses;
-  const UI2Screen({super.key, required this.addresses});
+  const UI2Screen({super.key});
 
   @override
   State<UI2Screen> createState() => _UI2ScreenState();
@@ -18,53 +17,55 @@ Future<List<String>> fetchRegisteredAddresses() async {
   final snapshot = await dbRef.get();
 
   if (snapshot.exists) {
-    final data = snapshot.value as Map<dynamic, dynamic>;
-    return List.generate(3, (i) => (data[i] ?? '').toString());
-  } else {
-    return List.generate(3, (i) => '');
+    final raw = snapshot.value;
+    if (raw is List) {
+      return List<String>.from(raw.map((e) => e?.toString() ?? ''));
+    } else if (raw is Map) {
+      return List.generate(3, (i) => (raw['$i'] ?? '').toString());
+    }
   }
+  return List.generate(3, (i) => '');
 }
+
 
 
 class _UI2ScreenState extends State<UI2Screen> {
   final TextEditingController inputController = TextEditingController();
-  late List<String> registeredAddresses;
+  List<String> registeredAddresses = ['', '', ''];
+  bool isLoading = true;
 
   @override
-  void initState() {
+  void initState() { //최초 한번만 실행됨.
     super.initState();
-    //초기화 왜하노
     // registeredAddresses = ['', '', '']; // 초기화
     loadAddressesFromFirebase();
   }
- //데이터베이스 가져오는코드
-  void loadAddressesFromFirebase() async {
-    final fetched = await fetchRegisteredAddresses();
-    setState(() {
-      registeredAddresses = fetched;
-    });
-  }
-  void registerAddress() {
-    String input = inputController.text.trim();
-    if (input.isEmpty) return;
-
-    setState(() {
-      for (int i = 0; i < registeredAddresses.length; i++){
-        if (registeredAddresses[i].isEmpty) {
-          registeredAddresses[i] = input;
-
-          // 저장
-          FirebaseDatabase.instance
-              .ref("shoeCabinet/addresses/$i")  // ✅ 배열 방식으로 저장
-              .set(input);
-
-
-          break;
-        }
-      }
-      inputController.clear();
-    });
-  }
+ // //데이터베이스 가져오는코드
+ //  void loadAddressesFromFirebase() async {
+ //    final fetched = await fetchRegisteredAddresses();
+ //    setState(() {
+ //      registeredAddresses = fetched;
+ //    });
+ //  }
+ //  void registerAddress() {
+ //    String input = inputController.text.trim();
+ //    if (input.isEmpty) return;
+ //
+ //    setState(() {
+ //      for (int i = 0; i < registeredAddresses.length; i++){
+ //        if (registeredAddresses[i].isEmpty) {
+ //          registeredAddresses[i] = input;
+ //
+ //          // 저장
+ //          FirebaseDatabase.instance
+ //              .ref("shoeCabinet/addresses/$i")  // ✅ 배열 방식으로 저장
+ //              .set(input);
+ //          break;
+ //        }
+ //      }
+ //      inputController.clear();
+ //    });
+ //  }
 
 
   @override
@@ -73,6 +74,13 @@ class _UI2ScreenState extends State<UI2Screen> {
     final scaleW = size.width / 200;
     final scaleH = size.height / 300;
 
+    if (isLoading) {
+      // 🔄 로딩 중일 때 로딩 인디케이터 표시
+      return const Scaffold(
+        backgroundColor: Color(0xFFEFEFEF),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
     return Scaffold(
       backgroundColor: const Color(0xFFEFEFEF),
       body: Center(
@@ -135,8 +143,15 @@ class _UI2ScreenState extends State<UI2Screen> {
                   scaleW: scaleW,
                   scaleH: scaleH,
                   hints: registeredAddresses,
-                  onSelect: (selectedAddress) {
-                    Navigator.pop(context, selectedAddress); // ✅ main.dart로 값 전달
+                  onSelect: (selectedAddress) async {
+                    // Firebase에 선택된 주소 저장
+                    final dbRef = FirebaseDatabase.instance.ref();
+                    await dbRef.child("shoeCabinet/selectedAddress").set(selectedAddress);
+
+                    print("✅ 선택된 주소 저장됨: $selectedAddress");
+
+                    // Navigator.pop(context); ← 메인으로 돌아갈 거면 유지
+                    Navigator.pop(context);
                   },
                 ),
               ],
@@ -146,7 +161,35 @@ class _UI2ScreenState extends State<UI2Screen> {
       ),
     );
   }
+  //데이터베이스 가져오는코드
+  void loadAddressesFromFirebase() async {
+    final fetched = await fetchRegisteredAddresses();
+    setState(() {
+      registeredAddresses = fetched;
+      isLoading = false;
+    });
+  }
+  void registerAddress() {
+    String input = inputController.text.trim();
+    if (input.isEmpty) return;
+
+    setState(() {
+      for (int i = 0; i < registeredAddresses.length; i++){
+        if (registeredAddresses[i].isEmpty) {
+          registeredAddresses[i] = input;
+
+          // 저장
+          FirebaseDatabase.instance
+              .ref("shoeCabinet/addresses/$i")  // ✅ 배열 방식으로 저장
+              .set(input);
+          break;
+        }
+      }
+      inputController.clear();
+    });
+  }
 }
+
 
 // 주소 1~3 표시용
 class InputFieldsColumn extends StatelessWidget {
