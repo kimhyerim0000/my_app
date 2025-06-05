@@ -9,6 +9,8 @@ import 'firebase_options.dart';
 import 'ui4_screen.dart';
 import 'xyTest.dart';
 import 'address_to_gridxy_korea.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 
 void main() async {
@@ -25,6 +27,7 @@ Future<String> getImageUrl(String imageName) async {
   print('✅ 이미지 URL: $url');
   return url;
 }
+
 class SmartUIApp extends StatelessWidget {
   const SmartUIApp({super.key});
 
@@ -44,8 +47,6 @@ class UIScreen extends StatefulWidget {
 
   @override
   State<UIScreen> createState() => _UIScreenState();
-
-
 }
 
 class _UIScreenState extends State<UIScreen> {
@@ -56,12 +57,38 @@ class _UIScreenState extends State<UIScreen> {
   double humidityValue = 55.0;
   String registeredAddress = '자주 가는 장소를 등록해주세요!'; // ✅ 초기 기본값 설정
   // List<String> registeredAddresses = ['', '', ''];
+  late Future<String> imageUrlFuture;
+
+  Future<void> uploadImageToFirebase() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.camera);
+
+    if (pickedFile != null) {
+      File imageFile = File(pickedFile.path);
+
+      try {
+        final ref = FirebaseStorage.instance.ref().child('test/test.jpg');
+        await ref.putFile(imageFile); // ✅ 기존 파일에 덮어씀
+        print("✅ 이미지 업로드 완료");
+
+        setState(() {
+          imageUrlFuture = getImageUrl('test.jpg');
+        });
+
+      } catch (e) {
+        print("❌ 이미지 업로드 실패: $e");
+      }
+    } else {
+      print("⚠️ 사진이 선택되지 않았음");
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     loadSelectedAddressFromFirebase(); //registeredAddress값을 불러옴.
     loadCurrentTemperatureAndHumidity(); //아두이노가 기록한 온습도를 main에 표시함.
+    imageUrlFuture = getImageUrl('test.jpg');
   }
   void loadSelectedAddressFromFirebase() async {
     final dbRef = FirebaseDatabase.instance.ref();
@@ -142,6 +169,8 @@ class _UIScreenState extends State<UIScreen> {
                     });
                   },
                   registeredAddresses: const ['', '', ''],
+                  onUploadImage: uploadImageToFirebase,
+                  imageUrlFuture: imageUrlFuture,
                   // // DB에 list변수 저장, 일반변수 저장. ,registeredAddresses
                   // registeredAddresses: registeredAddresses,
                 ),
@@ -197,9 +226,17 @@ class ImageWithControlsBox extends StatelessWidget {
   final void Function(double, double) onSettingsChanged;
   final void Function(String) onAddressSelected;
   final List<String> registeredAddresses;
+  final Future<void> Function() onUploadImage; // ✅ 수정!
+  final Future<String> imageUrlFuture; // ✅ 추가
+
+
 
   const ImageWithControlsBox({super.key, required this.scaleW, required this.scaleH,
-    required this.onSettingsChanged,required this.onAddressSelected,required this.registeredAddresses,});
+    required this.onSettingsChanged,required this.onAddressSelected,required this.registeredAddresses,required this.onUploadImage,
+    required this.imageUrlFuture,});
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -221,7 +258,7 @@ class ImageWithControlsBox extends StatelessWidget {
               borderRadius: BorderRadius.circular(8 * scaleW),
             ),
             child: FutureBuilder<String>(
-              future: getImageUrl('test.jpg'), // Firebase에 있는 이미지 이름
+              future: imageUrlFuture, // Firebase에 있는 이미지 이름
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const CircularProgressIndicator();
@@ -282,6 +319,22 @@ class ImageWithControlsBox extends StatelessWidget {
                     );
                   }
                 },
+              ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: SizedBox(
+                  width: 60, // 기존이 약 90이라면 2/3은 약 60
+                  height: 30, // 필요시 높이도 줄일 수 있음
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      await onUploadImage();
+                    },
+                    child: Text(
+                      "📸 업로드",
+                      style: TextStyle(fontSize: 10), // 글자도 약간 작게
+                    ),
+                  ),
+                ),
               ),
 
             ],
