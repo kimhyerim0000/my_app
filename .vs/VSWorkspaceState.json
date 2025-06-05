@@ -1,0 +1,18 @@
+{
+  "OutputFoldersPerTargetSystem": {
+    "Local Machine": [
+      "out\\build\\x64-Debug",
+      "out\\install\\x64-Debug"
+    ]
+  },
+  "ExpandedNodes": [
+    "",
+    "\\build",
+    "\\build\\windows",
+    "\\build\\windows\\x64",
+    "\\build\\windows\\x64\\plugins",
+    "\\build\\windows\\x64\\plugins\\firebase_core"
+  ],
+  "SelectedNode": "\\build\\windows\\x64\\plugins\\firebase_core\\ALL_BUILD.vcxproj",
+  "PreviewInSolutionExplorer": false
+}
